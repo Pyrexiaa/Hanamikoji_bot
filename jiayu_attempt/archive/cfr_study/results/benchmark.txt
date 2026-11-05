@@ -1,0 +1,40 @@
+neutral: CFR simultaneous, repeat 1: SPR=0.0016654336, 0.750s
+neutral: CFR alternating, repeat 1: SPR=0.00028006175, 0.849s
+neutral: CFR+ uniform, repeat 1: SPR=0.0002723089, 0.857s
+neutral: CFR+ linear, repeat 1: SPR=9.3418948e-06, 0.860s
+neutral: CFR alternating, repeat 2: SPR=0.00028006175, 0.849s
+neutral: CFR+ uniform, repeat 2: SPR=0.0002723089, 0.857s
+neutral: CFR+ linear, repeat 2: SPR=9.3418948e-06, 0.860s
+neutral: CFR simultaneous, repeat 2: SPR=0.0016654336, 0.752s
+neutral: CFR+ uniform, repeat 3: SPR=0.0002723089, 0.881s
+neutral: CFR+ linear, repeat 3: SPR=9.3418948e-06, 0.900s
+neutral: CFR simultaneous, repeat 3: SPR=0.0016654336, 0.803s
+neutral: CFR alternating, repeat 3: SPR=0.00028006175, 0.848s
+neutral: LP SPR=8.67e-18, value=-8.6736174e-19
+first_player: CFR simultaneous, repeat 1: SPR=0.0016654336, 0.490s
+first_player: CFR alternating, repeat 1: SPR=0.00027074287, 0.489s
+first_player: CFR+ uniform, repeat 1: SPR=0.00025903051, 0.497s
+first_player: CFR+ linear, repeat 1: SPR=1.1937659e-05, 0.504s
+first_player: CFR alternating, repeat 2: SPR=0.00027074287, 0.492s
+first_player: CFR+ uniform, repeat 2: SPR=0.00025903051, 0.499s
+first_player: CFR+ linear, repeat 2: SPR=1.1937659e-05, 0.505s
+first_player: CFR simultaneous, repeat 2: SPR=0.0016654336, 0.436s
+first_player: CFR+ uniform, repeat 3: SPR=0.00025903051, 0.498s
+first_player: CFR+ linear, repeat 3: SPR=1.1937659e-05, 0.500s
+first_player: CFR simultaneous, repeat 3: SPR=0.0016654336, 0.438s
+first_player: CFR alternating, repeat 3: SPR=0.00027074287, 0.492s
+first_player: LP SPR=6.94e-18, value=0.019047619
+favored_g3: CFR simultaneous, repeat 1: SPR=0.00068485218, 0.433s
+favored_g3: CFR alternating, repeat 1: SPR=0.0003085684, 0.494s
+favored_g3: CFR+ uniform, repeat 1: SPR=0.00027460278, 0.501s
+favored_g3: CFR+ linear, repeat 1: SPR=8.5885357e-07, 0.506s
+favored_g3: CFR alternating, repeat 2: SPR=0.0003085684, 0.494s
+favored_g3: CFR+ uniform, repeat 2: SPR=0.00027460278, 0.499s
+favored_g3: CFR+ linear, repeat 2: SPR=8.5885357e-07, 0.503s
+favored_g3: CFR simultaneous, repeat 2: SPR=0.00068485218, 0.433s
+favored_g3: CFR+ uniform, repeat 3: SPR=0.00027460278, 0.500s
+favored_g3: CFR+ linear, repeat 3: SPR=8.5885357e-07, 0.499s
+favored_g3: CFR simultaneous, repeat 3: SPR=0.00068485218, 0.443s
+favored_g3: CFR alternating, repeat 3: SPR=0.0003085684, 0.494s
+favored_g3: LP SPR=6.94e-18, value=0.057142857
+/Users/jiayulim/Documents/GitHub/Hanamikoji_bot/task4/results/experiments.json

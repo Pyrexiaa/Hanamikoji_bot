@@ -1,0 +1,26 @@
+test_hidden_reserve_bayes_likelihood_for_both_seats (test_posterior.PosteriorTests.test_hidden_reserve_bayes_likelihood_for_both_seats) ... ok
+test_initial_state_including_undo_history_is_preserved (test_posterior.PosteriorTests.test_initial_state_including_undo_history_is_preserved) ... ok
+test_matches_independent_joint_law_after_own_actions (test_posterior.PosteriorTests.test_matches_independent_joint_law_after_own_actions) ... ok
+test_matching_initial_decision_stops_immediately (test_posterior.PosteriorTests.test_matching_initial_decision_stops_immediately) ... ok
+test_opening_hidden_card_counts_for_both_seats (test_posterior.PosteriorTests.test_opening_hidden_card_counts_for_both_seats) ... ok
+test_wrong_round_and_terminal_initial_state_are_unreachable (test_posterior.PosteriorTests.test_wrong_round_and_terminal_initial_state_are_unreachable) ... ok
+test_nonzero_value_and_unrestricted_dual_variables (test_solver.LPReferenceTests.test_nonzero_value_and_unrestricted_dual_variables) ... ok
+test_all_child_infosets_contribute_to_their_parent (test_solver.SolverUnitTests.test_all_child_infosets_contribute_to_their_parent) ... ok
+test_best_response_matches_exhaustive_normal_form (test_solver.SolverUnitTests.test_best_response_matches_exhaustive_normal_form) ... ok
+test_cfr_average_converges_toward_nonuniform_equilibrium (test_solver.SolverUnitTests.test_cfr_average_converges_toward_nonuniform_equilibrium) ... ok
+test_cfr_continuation_and_reset_match_uninterrupted_runs (test_solver.SolverUnitTests.test_cfr_continuation_and_reset_match_uninterrupted_runs) ... ok
+test_cfr_converges_on_shared_parent_treeplexes (test_solver.SolverUnitTests.test_cfr_converges_on_shared_parent_treeplexes) ... ok
+test_cfr_plus_clips_cumulative_regret_after_each_update (test_solver.SolverUnitTests.test_cfr_plus_clips_cumulative_regret_after_each_update) ... ok
+test_changed_payoffs_are_used_after_continuation_and_reset (test_solver.SolverUnitTests.test_changed_payoffs_are_used_after_continuation_and_reset) ... ok
+test_game_without_decisions_keeps_root_payoff (test_solver.SolverUnitTests.test_game_without_decisions_keeps_root_payoff) ... ok
+test_optional_lp_does_not_make_scipy_an_import_requirement (test_solver.SolverUnitTests.test_optional_lp_does_not_make_scipy_an_import_requirement) ... ok
+test_payoff_reward_signs_and_known_matrix_equilibrium (test_solver.SolverUnitTests.test_payoff_reward_signs_and_known_matrix_equilibrium) ... ok
+test_zero_iteration_calls_preserve_valid_average (test_solver.SolverUnitTests.test_zero_iteration_calls_preserve_valid_average) ... ok
+test_full_tiny_best_responses_match_independent_linear_programs (test_solver.TinyGameIntegrationTests.test_full_tiny_best_responses_match_independent_linear_programs) ... ok
+test_lp_equilibrium_has_independent_best_response_certificate (test_solver.TinyGameIntegrationTests.test_lp_equilibrium_has_independent_best_response_certificate) ... ok
+test_sequence_payoff_matches_direct_game_tree_enumeration (test_solver.TinyGameIntegrationTests.test_sequence_payoff_matches_direct_game_tree_enumeration) ... ok
+
+----------------------------------------------------------------------
+Ran 21 tests in 24.838s
+
+OK
