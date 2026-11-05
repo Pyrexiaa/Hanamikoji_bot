@@ -1,0 +1,19 @@
+[build-system]
+requires = ["scikit-build-core>=0.9", "pybind11>=3.0"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "hana-engine-cpp"
+version = "0.1.0"
+requires-python = ">=3.9"
+
+[tool.scikit-build]
+# The CMake source directory
+cmake.source-dir = "engine_cpp"
+# Place the built extension at the repo root so `import hana_engine_cpp` works
+wheel.packages = []
+build-dir = "engine_cpp/_build/{wheel_tag}"
+
+[tool.scikit-build.cmake.define]
+# Pass pybind11 location from the venv into CMake
+PYBIND11_FINDPYTHON = "ON"

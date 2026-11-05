@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hanamikoji</title>
+<!-- Fonts are optional: without a network connection the fallbacks are used. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* Layout: a card table. The AI's seat at the top, the geisha board in the middle,
+   your hand at the bottom; the log in a side rail (below the table on narrow screens). */
+:root {
+  --bg: #eef0f4;
+  --surface: #ffffff;
+  --surface-2: #e3e6ee;
+  --fg: #1c2030;
+  --muted: #5d6478;
+  --line: #cfd4e0;
+  --you: #2f55c7;
+  --you-soft: #dde5fb;
+  --ai: #a3346a;
+  --ai-soft: #f6dde9;
+  --focus: #2f55c7;
+  --card-ink: #161a26;
+  --g1: #8fd0c4; --g2: #f2c76b; --g3: #b9d98a; --g4: #f4a58e;
+  --g5: #9cc3f0; --g6: #c7a8ef; --g7: #ef8da6;
+  --font-display: "Shippori Mincho B1", "Hiragino Mincho ProN", Georgia, serif;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Segoe UI", system-ui, sans-serif;
+  --radius: 10px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141722; --surface: #1d2130; --surface-2: #272c3e; --fg: #e8eaf2; --muted: #a1a8bd;
+    --line: #353b51; --you: #8aa6ff; --you-soft: #263257; --ai: #f08cbc; --ai-soft: #4a2236;
+    --focus: #8aa6ff; color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+html { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.45;
+  padding: 16px max(16px, env(safe-area-inset-right, 0px)) 32px max(16px, env(safe-area-inset-left, 0px));
+}
+body[data-busy] { cursor: progress; }
+body[data-busy] button { pointer-events: none; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.label { font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.wrap { max-width: 1200px; margin: 0 auto; }
+.error { color: var(--ai); font-size: .88rem; min-height: 1.2em; margin: 0; white-space: pre-line; }
+
+/* ── Setup ─────────────────────────────────────────── */
+.setup { display: grid; gap: 22px; max-width: 860px; margin: 0 auto; }
+.setup h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 800; }
+.setup .lede { color: var(--muted); margin: 4px 0 0; max-width: 60ch; }
+.choice-group { display: grid; gap: 8px; }
+.tiles { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+.tiles.opponents { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+.tile {
+  text-align: left; background: var(--surface); border: 2px solid var(--line); border-radius: var(--radius);
+  padding: 12px 14px; display: grid; gap: 4px; min-width: 0;
+}
+.tiles.opponents .tile { padding: 9px 12px; }
+.tile[aria-pressed="true"] { border-color: var(--you); background: var(--you-soft); }
+.tile:disabled { opacity: .5; cursor: not-allowed; }
+.tile .t-name { font-weight: 700; }
+.tile .t-desc { font-size: .84rem; color: var(--muted); }
+.tile .t-meta { font-size: .76rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.segmented { display: inline-flex; flex-wrap: wrap; border: 2px solid var(--line); border-radius: 999px; overflow: hidden; background: var(--surface); }
+.segmented button { border: 0; background: transparent; padding: 7px 16px; }
+.segmented button[aria-pressed="true"] { background: var(--you); color: var(--surface); font-weight: 700; }
+.row { display: flex; flex-wrap: wrap; gap: 18px 28px; align-items: end; }
+.primary { background: var(--you); color: var(--surface); border: 0; border-radius: 999px; padding: 11px 26px; font-weight: 700; font-size: 1rem; }
+.primary:disabled { opacity: .4; cursor: not-allowed; }
+.secondary { background: var(--surface); border: 2px solid var(--line); border-radius: 999px; padding: 9px 18px; font-weight: 500; }
+.secondary[aria-pressed="true"] { border-color: var(--you); background: var(--you-soft); }
+
+/* starting favors */
+.favor-board { display: flex; flex-wrap: wrap; gap: 10px; }
+.favor-pick { display: grid; gap: 6px; justify-items: center; background: transparent; border: 0; padding: 0; }
+.favor-pick .who { font-size: .78rem; font-weight: 700; padding: 2px 10px; border-radius: 999px; background: var(--surface-2); }
+.favor-pick[data-owner="you"] .who { background: var(--you); color: var(--surface); }
+.favor-pick[data-owner="ai"] .who { background: var(--ai); color: var(--surface); }
+
+/* ── Cards ─────────────────────────────────────────── */
+.card {
+  --w: 64px; width: var(--w); aspect-ratio: 5 / 7; border-radius: 8px; border: 2px solid transparent;
+  background: var(--gc); color: var(--card-ink); display: grid; grid-template-rows: auto 1fr; padding: 4px 6px;
+  font-weight: 700; position: relative; user-select: none; flex: none; text-align: left;
+}
+.card .c-rank { font-family: var(--font-display); font-size: 1.2rem; line-height: 1; display: flex; align-items: baseline; gap: 3px; }
+.card .c-rank-word { font-family: var(--font-body); font-size: .6rem; font-weight: 700; letter-spacing: .04em; }
+.card .c-name { align-self: end; font-size: .68rem; line-height: 1.1; white-space: nowrap; }
+.card.back { background: repeating-linear-gradient(45deg, var(--surface-2) 0 6px, var(--line) 6px 12px); border-color: var(--line); }
+.card.mini { --w: 22px; padding: 0; border-radius: 4px; grid-template-rows: 1fr; place-items: center; font-size: .62rem; }
+.card.mini.ghost { background: transparent; border: 2px dashed var(--gc); color: var(--fg); }
+.card.mini.reserved { outline: 2px dashed var(--card-ink); outline-offset: -5px; }
+button.card { cursor: pointer; transition: transform .12s ease; }
+button.card:hover:not(:disabled) { transform: translateY(-4px); }
+button.card[aria-pressed="true"] { transform: translateY(-12px); border-color: var(--you); box-shadow: 0 6px 0 -2px var(--you); }
+button.card:disabled { cursor: default; }
+.card .tag {
+  position: absolute; top: -10px; left: 50%; translate: -50% 0; font-size: .62rem; padding: 1px 6px; border-radius: 999px;
+  background: var(--fg); color: var(--bg); white-space: nowrap;
+}
+
+/* ── Game screen ───────────────────────────────────── */
+.topbar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.topbar h2 { font-size: 1.35rem; font-weight: 800; }
+.topbar .win-note { font-size: .82rem; color: var(--muted); }
+.status { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-variant-numeric: tabular-nums; }
+.pill { padding: 3px 12px; border-radius: 999px; font-size: .82rem; font-weight: 700; background: var(--surface-2); }
+.pill.you { background: var(--you); color: var(--surface); }
+.pill.ai { background: var(--ai); color: var(--surface); }
+.tools { display: flex; gap: 6px; }
+.tools button { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; font-size: .85rem; }
+
+.layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr) 300px; align-items: start; }
+@media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+.table { display: grid; gap: 12px; min-width: 0; }
+
+.seat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; display: grid; gap: 10px; }
+.seat.ai-seat { border-top: 4px solid var(--ai); }
+.seat.you-seat { border-bottom: 4px solid var(--you); }
+.seat-head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; }
+.seat-head h3 { font-size: 1.05rem; }
+.seat-body { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; }
+.backs { display: flex; }
+.backs .card { --w: 30px; margin-left: -12px; }
+.backs .card:first-child { margin-left: 0; }
+.facts { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .85rem; color: var(--muted); align-items: center; }
+.facts > span { display: inline-flex; align-items: center; gap: 4px; }
+.facts strong { color: var(--fg); font-variant-numeric: tabular-nums; }
+
+.tracker { display: grid; gap: 3px; min-width: 170px; font-size: .78rem; font-variant-numeric: tabular-nums; }
+.bar { height: 6px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+.bar > span { display: block; height: 100%; border-radius: inherit; background: var(--you); }
+.ai-seat .bar > span { background: var(--ai); }
+
+.tokens { display: flex; flex-wrap: wrap; gap: 6px; }
+.token {
+  display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 5px 12px 5px 6px;
+  border: 2px solid var(--line); background: var(--surface); font-size: .85rem; font-weight: 500;
+}
+.token .n { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); font-weight: 700; font-size: .78rem; }
+.token.used { opacity: .45; text-decoration: line-through; }
+.token:disabled:not(.used) { opacity: .6; cursor: default; }
+.token[aria-pressed="true"] { border-color: var(--you); background: var(--you-soft); }
+.token.fits { border-color: var(--you); }
+
+/* board */
+.board { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 8px; overflow-x: auto; }
+.cols { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(84px, 1fr); gap: 6px; min-width: min-content; }
+.col { display: grid; grid-template-rows: 66px 22px auto 22px 66px; justify-items: center; align-items: center; gap: 2px; }
+.stack { display: flex; flex-wrap: wrap-reverse; gap: 2px; justify-content: center; align-content: flex-end; width: 100%; height: 100%; }
+.col .stack.you { flex-wrap: wrap; align-content: flex-start; }
+.col .card.geisha { --w: 66px; }
+.col .lead { font-size: .7rem; color: var(--muted); white-space: nowrap; }
+.col .lead.holder { color: var(--fg); font-weight: 700; }
+/* The favor holder's count line carries a dot in their colour. */
+.marker { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; }
+.marker[data-owner="ai"] { background: var(--ai); }
+.marker[data-owner="you"] { background: var(--you); }
+/* Who holds the favor, written in the centre of the geisha card. */
+.favor-tag {
+  position: absolute; top: 50%; left: 50%; translate: -50% -50%; display: grid; justify-items: center; line-height: 1.05;
+  padding: 3px 7px; border-radius: 6px; background: var(--surface); color: var(--fg); border: 1.5px solid var(--card-ink);
+}
+.favor-tag .f-cap { font-size: .52rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; opacity: .8; }
+.favor-tag .f-who { font-size: .8rem; font-weight: 700; }
+.favor-tag[data-owner="you"] { background: var(--you); color: var(--surface); border-color: var(--you); }
+.favor-tag[data-owner="ai"] { background: var(--ai); color: var(--surface); border-color: var(--ai); }
+.banner { display: grid; gap: 2px; margin: 0 auto 10px; width: fit-content; max-width: 100%;
+  background: var(--ai); color: var(--surface); border-radius: 12px; padding: 5px 16px; font-size: .86rem; font-weight: 700; }
+
+/* centre: your prompt, or the AI's offer */
+.centre { background: var(--surface); border: 2px solid var(--you); border-radius: var(--radius); padding: 12px; display: grid; gap: 10px; }
+.centre.waiting { border-color: var(--line); color: var(--muted); }
+.centre.offer { border-color: var(--ai); }
+.prompt { font-weight: 500; margin: 0; }
+.prompt small { display: block; color: var(--muted); font-weight: 400; }
+.prompt-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.offer-cards { display: flex; flex-wrap: wrap; gap: 14px; align-items: end; padding-top: 10px; }
+.pair { display: flex; gap: 6px; padding: 8px; border-radius: var(--radius); border: 2px dashed var(--line); background: transparent; }
+button.pair:hover { border-color: var(--you); }
+.pair-slot { display: grid; gap: 4px; justify-items: start; }
+
+.hand { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 14px; min-height: 110px; align-items: end; }
+.hand .card { --w: 70px; }
+.mine { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: .82rem; color: var(--muted); }
+.keys { font-size: .76rem; color: var(--muted); }
+kbd { font-family: var(--font-body); font-size: .74rem; padding: 0 5px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; background: var(--surface); }
+
+/* log */
+.log { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; max-height: 640px; overflow-y: auto; min-width: 0; }
+.log summary { cursor: pointer; font-family: var(--font-display); font-weight: 800; font-size: 1.05rem; }
+.log-round { margin-top: 10px; }
+.log-turn { display: block; margin: 8px 0 2px; }
+.log-entry { display: grid; grid-template-columns: 10px 1fr; gap: 6px; align-items: baseline; font-size: .84rem; padding: 2px 0; }
+.log-entry .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); align-self: center; }
+.log-entry.you .dot { background: var(--you); }
+.log-entry.ai .dot { background: var(--ai); }
+.log-empty { color: var(--muted); font-size: .84rem; }
+
+/* round and game end */
+.overlay { position: fixed; inset: 0; background: color-mix(in srgb, var(--bg) 70%, transparent); display: grid; place-items: center; z-index: 20; padding: 16px; }
+.sheet { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; width: min(720px, 100%); max-height: 100%; overflow-y: auto; display: grid; gap: 14px; }
+.sheet h2 { font-size: 1.6rem; font-weight: 800; }
+.reveal .card { --w: 66px; animation: flip .5s ease both; }
+@keyframes flip { from { transform: rotateY(90deg); } to { transform: none; } }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .86rem; font-variant-numeric: tabular-nums; }
+th, td { padding: 5px 8px; border-bottom: 1px solid var(--line); text-align: left; }
+th { font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+th.you-col { color: var(--you); }
+th.ai-col { color: var(--ai); }
+.result { font-family: var(--font-display); font-size: 2rem; font-weight: 800; }
+.result-sub { color: var(--muted); }
+.needs { font-size: .84rem; color: var(--muted); }
+.summary-bar { position: fixed; bottom: 16px; left: 50%; translate: -50% 0; z-index: 20; display: flex; gap: 10px; align-items: center;
+  background: var(--surface); border: 2px solid var(--you); border-radius: 999px; padding: 6px 8px 6px 16px; }
+.rules { display: grid; gap: 8px; }
+.rules p { margin: 0; max-width: 70ch; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+@media (max-width: 520px) {
+  .hand .card { --w: 56px; }
+  .col .card.geisha { --w: 56px; }
+  .cols { grid-auto-columns: minmax(76px, 1fr); }
+}
+</style>
+</head>
+<body>
+<div id="app" class="wrap"></div>
+
+<script>
+// The page talks to gui/server.py:
+//   GET  /agent_list         opponents, with the variants they play and any reason they are unavailable
+//   POST /favor_setup_info   geishas and win rules of a variant (single-round setup)
+//   POST /new_game           start a game; returns the state
+//   POST /action             play one of state.legal_actions; returns the state after the AI has moved
+//   POST /next_round         continue after a round summary
+// Moves are built by clicking an action token and cards, then matched against
+// state.legal_actions, so the page never sends a move the server did not offer.
+
+// ── Static descriptions ──────────────────────────────────────────────────────
+const VARIANTS = {
+  tiny_hana:   { name: 'Tiny Hanamikoji', geishas: 3, cards: 7,  actions: ['reserve', 'split'],
+                 blurb: '3 geishas. The offer-and-choose idea at its smallest.' },
+  medium_hana: { name: 'Hanamikoji',      geishas: 5, cards: 11, actions: ['reserve', 'discard', 'split'],
+                 blurb: '5 geishas. Adds a discard that shows one card.' },
+  full_hana:   { name: 'Full Hanamikoji', geishas: 7, cards: 21, actions: ['reserve', 'trade_off', 'gift', 'competition'],
+                 blurb: 'The board game: 7 geishas and four actions.' },
+};
+const VARIANT_KEY = { tiny_hana: 'tiny', medium_hana: 'medium', full_hana: 'full' };
+const ACTIONS = {
+  reserve:     { label: 'Reserve',     n: 1, hint: 'Pick 1 card to keep face down. It counts for you at the end of the round.' },
+  discard:     { label: 'Discard',     n: 2, hint: 'Pick 2 cards to discard, then choose which one to show the opponent.' },
+  split:       { label: 'Split',       n: 2, hint: 'Pick 2 cards to offer. The opponent takes one; you get the other.' },
+  trade_off:   { label: 'Trade-off',   n: 2, hint: 'Pick 2 cards to remove face down. They count for nobody.' },
+  gift:        { label: 'Gift',        n: 3, hint: 'Pick 3 cards to offer. The opponent takes one; you keep the other two.' },
+  competition: { label: 'Competition', n: 4, hint: 'Pick 4 cards and arrange them in two pairs. The opponent takes one pair; you get the other.' },
+};
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const $ = (sel, root = document) => root.querySelector(sel);
+function el(tag, attrs = {}, ...kids) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') node.className = v;
+    else if (k.startsWith('on')) node.addEventListener(k.slice(2), v);
+    else if (v === true) node.setAttribute(k, '');
+    else if (v !== false && v != null) node.setAttribute(k, v);
+  }
+  for (const kid of kids.flat()) if (kid != null && kid !== false) node.append(kid.nodeType ? kid : document.createTextNode(kid));
+  return node;
+}
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('hanamikoji-' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('hanamikoji-' + k, JSON.stringify(v)); } catch {} },
+};
+const suitLabel = name => name.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+const sameCards = (a, b) => a.length === b.length && [...a].sort().join() === [...b].sort().join();
+const cardsText = n => `${n} card${n === 1 ? '' : 's'}`;
+const countOf = (names, name) => names.filter(n => n === name).length;
+
+// ── State ────────────────────────────────────────────────────────────────────
+let AGENTS = [];       // from /agent_list
+let S = null;          // the server's game state
+let SETUP = {
+  variant: store.get('variant', 'tiny_hana'), mode: store.get('mode', 'full_game'),
+  agent: store.get('agent', 'random'), player: store.get('player', 0),
+};
+let FAVOR_SETUP = null;  // {geishas, win_geisha_count, win_favor_points, picks}
+let UI = freshUI();
+function freshUI() {
+  return { screen: 'setup', token: null, sel: [], reveal: null, pairSwap: null, hoverOffer: null,
+           banner: [], showRules: false, showLog: true, summaryHidden: false, error: '', setupError: '',
+           pastLogs: [], lastRound: null, lastLogLength: 0 };
+}
+
+// Geishas of the current screen: the game's, or the single-round setup's.
+const geishas = () => S ? S.geishas : FAVOR_SETUP.geishas;
+const geishaIndex = name => geishas().findIndex(g => g.name === name);
+const rankOf = name => geishas()[geishaIndex(name)].rank;
+const hp = () => S.human_player;
+// Engine favors: -1 = player 0, +1 = player 1, 0 = neutral. Owner from the human's side.
+const ownerOf = favor => favor === 0 ? null : ((favor === -1 ? 0 : 1) === hp() ? 'you' : 'ai');
+
+function cardEl(name, { tag = 'div', mini = false, ghost = false, reserved = false, extra = {}, label = null, style = '' } = {}) {
+  const i = geishaIndex(name), rank = rankOf(name);
+  const cls = ['card', mini && 'mini', ghost && 'ghost', reserved && 'reserved'].filter(Boolean).join(' ');
+  const node = el(tag, { class: cls, 'aria-label': `${suitLabel(name)}, rank ${rank}`, ...extra,
+                         style: `--gc: var(--g${(i % 7) + 1}); ${style}` });
+  if (mini) { node.textContent = String(i + 1); node.title = suitLabel(name) + (reserved ? ' (reserved)' : ''); return node; }
+  node.append(el('span', { class: 'c-rank' }, el('span', { class: 'c-rank-word' }, 'Rank'), String(rank)),
+              el('span', { class: 'c-name' }, suitLabel(name)));
+  if (label) node.append(el('span', { class: 'tag' }, label));
+  return node;
+}
+
+// ── Server calls ─────────────────────────────────────────────────────────────
+async function loadAgentList() {
+  try {
+    const resp = await fetch('/agent_list');
+    AGENTS = await resp.json();
+  } catch (e) {
+    UI.setupError = `Could not load the opponents: ${e.message}`;
+  }
+  render();
+}
+
+// One in-game request at a time. While it is in flight further clicks are
+// ignored: a double click would otherwise post a stale action for a state
+// that has already moved on. On an error the current state is kept and the
+// message shown.
+let busy = false;
+async function post(url, body) {
+  if (busy) return null;
+  busy = true;
+  document.body.dataset.busy = '1';
+  try {
+    const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const result = await resp.json();
+    if (!resp.ok) return { error: result.error || `Request failed (${resp.status}).` };
+    return { state: result };
+  } catch (e) {
+    return { error: `Could not reach the server: ${e.message}` };
+  } finally {
+    busy = false;
+    delete document.body.dataset.busy;
+  }
+}
+
+async function gameRequest(url, body) {
+  const result = await post(url, body);
+  if (!result) return;
+  if (result.error) { UI.error = result.error; render(); return; }
+  receive(result.state);
+}
+
+// A new state from the server: keep earlier rounds' logs, and announce what the AI just did.
+function receive(state) {
+  const sameGame = S !== null && UI.screen === 'game';
+  if (sameGame && state.round !== UI.lastRound && S.log.length) UI.pastLogs.push({ round: UI.lastRound, log: S.log });
+  const start = sameGame && state.round === UI.lastRound ? UI.lastLogLength : 0;
+  const news = state.log.slice(start).filter(e => !e.bold && e.text.startsWith('Opponent'));
+  S = state;
+  UI.lastRound = state.round;
+  UI.lastLogLength = state.log.length;
+  UI.token = null; UI.sel = []; UI.reveal = null; UI.pairSwap = null; UI.hoverOffer = null;
+  UI.error = ''; UI.summaryHidden = false;
+  if (news.length) showBanner(news.map(e => e.text));
+  render();
+}
+
+async function startGame(initialFavors) {
+  const body = { variant: SETUP.variant, agent: SETUP.agent, human_player: SETUP.player, game_mode: SETUP.mode };
+  if (initialFavors) body.initial_favors = initialFavors;
+  const result = await post('/new_game', body);
+  if (!result) return;
+  if (result.error) { UI.setupError = result.error; render(); return; }
+  S = null;
+  const keep = { showLog: UI.showLog };
+  UI = { ...freshUI(), ...keep, screen: 'game' };
+  receive(result.state);
+}
+
+async function openFavorSetup() {
+  const result = await post('/favor_setup_info', { variant: SETUP.variant });
+  if (!result) return;
+  if (result.error) { UI.setupError = result.error; render(); return; }
+  FAVOR_SETUP = { ...result.state, picks: result.state.geishas.map(() => null) };
+  S = null;                                     // cards on this screen use FAVOR_SETUP's geishas
+  UI.screen = 'favors'; UI.setupError = '';
+  render();
+}
+
+// ── Moves ────────────────────────────────────────────────────────────────────
+const myTurn = () => S && S.winner === null && !S.round_end_summary && S.current_player === hp();
+const respondingToOffer = () => myTurn() && S.pending_offer && S.pending_offer.offerer !== hp();
+const legalOf = type => S.legal_actions.filter(a => a.action_type === type);
+const handNames = () => UI.sel.map(i => S.human.hand[i]);
+
+// The legal action that the token and selected cards describe, or null.
+function matchedMove() {
+  if (!UI.token || UI.sel.length !== ACTIONS[UI.token].n) return null;
+  const names = handNames();
+  const options = legalOf(UI.token).filter(a => sameCards(a.cards, names));
+  if (UI.token === 'discard') {
+    if (UI.reveal === null) return null;
+    return options.find(a => a.cards[a.choice] === names[UI.reveal]) || null;
+  }
+  if (UI.token === 'competition') {
+    const mine = [names.slice(0, 2), names.slice(2, 4)];
+    return options.find(a => {
+      const theirs = [a.cards.slice(0, 2), a.cards.slice(2, 4)];
+      return (sameCards(mine[0], theirs[0]) && sameCards(mine[1], theirs[1])) ||
+             (sameCards(mine[0], theirs[1]) && sameCards(mine[1], theirs[0]));
+    }) || null;
+  }
+  return options[0] || null;
+}
+// Action types with a legal move that uses exactly the selected cards.
+function typesFittingSelection() {
+  if (UI.token || !UI.sel.length) return new Set();
+  const names = handNames();
+  return new Set(S.legal_actions.filter(a => ACTIONS[a.action_type] && a.cards.length === names.length && sameCards(a.cards, names))
+                                .map(a => a.action_type));
+}
+
+function chooseToken(type) {
+  if (!myTurn() || respondingToOffer() || !legalOf(type).length) return;
+  UI.token = UI.token === type ? null : type;
+  if (UI.token && UI.sel.length > ACTIONS[UI.token].n) UI.sel = UI.sel.slice(0, ACTIONS[UI.token].n);
+  UI.reveal = null; UI.pairSwap = null; UI.error = '';
+  render();
+}
+function toggleCard(i) {
+  if (!myTurn() || respondingToOffer()) return;
+  const at = UI.sel.indexOf(i);
+  const n = UI.token ? ACTIONS[UI.token].n : Infinity;
+  if (at >= 0) UI.sel.splice(at, 1);
+  else if (UI.sel.length < n) UI.sel.push(i);
+  else UI.sel = [...UI.sel.slice(1), i];        // full: replace the oldest pick
+  UI.reveal = null; UI.pairSwap = null; UI.error = '';
+  render();
+}
+function cancelSelection() { UI.token = null; UI.sel = []; UI.reveal = null; UI.pairSwap = null; render(); }
+function confirmMove() {
+  const move = matchedMove();
+  if (move) gameRequest('/action', move);
+}
+function swapInPairs(index) {          // competition: click one card in each pair to swap them
+  if (UI.pairSwap === null) { UI.pairSwap = index; render(); return; }
+  const a = UI.pairSwap, b = index;
+  if ((a < 2) !== (b < 2)) [UI.sel[a], UI.sel[b]] = [UI.sel[b], UI.sel[a]];
+  UI.pairSwap = null; render();
+}
+// Take choice i of the AI's offer (a card, or a pair for a competition).
+function respond(i) {
+  const offer = S.pending_offer;
+  const options = legalOf(offer.type + '_response');
+  const same = (x, y) => offer.type === 'competition'
+    ? sameCards(offer.cards.slice(2 * x, 2 * x + 2), offer.cards.slice(2 * y, 2 * y + 2))
+    : offer.cards[x] === offer.cards[y];
+  // Responses are deduplicated: two equal cards may share one legal choice.
+  const move = options.find(a => a.choice === i) || options.find(a => same(a.choice, i));
+  if (move) gameRequest('/action', move);
+}
+
+// ── Rendering ────────────────────────────────────────────────────────────────
+let bannerTimer = null;
+function showBanner(lines) {
+  UI.banner = lines; clearTimeout(bannerTimer);
+  bannerTimer = setTimeout(() => { UI.banner = []; if (UI.screen === 'game') renderBoardOnly(); }, 5000);
+}
+function render() {
+  const screens = { setup: renderSetup, favors: renderFavorSetup, game: renderGame };
+  $('#app').replaceChildren(screens[UI.screen]());
+}
+function seg(name, options, value, onPick) {
+  return el('div', { class: 'segmented', role: 'group', 'aria-label': name },
+    ...options.map(([v, label]) => el('button', { 'aria-pressed': String(v === value), onclick: () => onPick(v) }, label)));
+}
+function setSetup(k, v) { SETUP[k] = v; store.set(k, v); UI.setupError = ''; render(); }
+
+function renderSetup() {
+  const vk = VARIANT_KEY[SETUP.variant];
+  const opps = AGENTS.filter(a => a[vk]);
+  if (opps.length && !opps.some(a => a.id === SETUP.agent && !a.unavailable)) {
+    const first = opps.find(a => !a.unavailable);
+    if (first) SETUP.agent = first.id;
+  }
+  const notes = opps.filter(a => a.unavailable).map(a => `${a.label} is unavailable: ${a.unavailable}`);
+  return el('section', { class: 'setup' },
+    el('div', {}, el('h1', {}, 'Hanamikoji'),
+       el('p', { class: 'lede' }, 'Win the favor of the geishas. Each round you play every action once; offers let your opponent choose first.')),
+    el('div', { class: 'choice-group' }, el('span', { class: 'label' }, 'Variant'),
+      el('div', { class: 'tiles' }, ...Object.entries(VARIANTS).map(([id, v]) =>
+        el('button', { class: 'tile', 'aria-pressed': String(SETUP.variant === id), onclick: () => setSetup('variant', id) },
+          el('span', { class: 't-name' }, v.name), el('span', { class: 't-desc' }, v.blurb),
+          el('span', { class: 't-meta' }, `${v.geishas} geishas · ${v.cards} cards · ${v.actions.map(a => ACTIONS[a].label).join(', ')}`))))),
+    el('div', { class: 'choice-group' }, el('span', { class: 'label' }, `Opponent · ${opps.length} for this variant`),
+      el('div', { class: 'tiles opponents' }, ...opps.map(a =>
+        el('button', { class: 'tile', 'aria-pressed': String(SETUP.agent === a.id), disabled: !!a.unavailable,
+                       title: a.unavailable || '', onclick: () => setSetup('agent', a.id) },
+          el('span', { class: 't-name' }, a.label),
+          a.unavailable ? el('span', { class: 't-desc' }, 'Unavailable') : null)))),
+    el('div', { class: 'row' },
+      el('div', { class: 'choice-group' }, el('span', { class: 'label' }, 'Game'),
+        seg('Game', [['full_game', 'Full game'], ['single_round', 'Single round']], SETUP.mode, v => setSetup('mode', v))),
+      el('div', { class: 'choice-group' }, el('span', { class: 'label' }, 'Play as'),
+        seg('Play as', [[0, 'Player 1'], [1, 'Player 2']], SETUP.player, v => setSetup('player', v)))),
+    el('div', { class: 'row' },
+      el('button', { class: 'primary', disabled: !opps.some(a => a.id === SETUP.agent && !a.unavailable),
+                     onclick: () => SETUP.mode === 'single_round' ? openFavorSetup() : startGame() },
+        SETUP.mode === 'single_round' ? 'Choose starting favors' : 'Start game')),
+    el('p', { class: 'error' }, [UI.setupError, ...notes].filter(Boolean).join('\n')));
+}
+
+// Who would already have won with these picks ('You' / 'The AI'), or null.
+// Mirrors GameState.check_winner: points are checked before geisha counts.
+function alreadyWonBy(picks) {
+  const st = { you: { count: 0, pts: 0 }, ai: { count: 0, pts: 0 } };
+  picks.forEach((who, i) => { if (who) { st[who].count += 1; st[who].pts += FAVOR_SETUP.geishas[i].rank; } });
+  const label = { you: 'You', ai: 'The AI' };
+  if (FAVOR_SETUP.win_favor_points !== null)
+    for (const w of ['you', 'ai']) if (st[w].pts >= FAVOR_SETUP.win_favor_points) return label[w];
+  for (const w of ['you', 'ai']) if (st[w].count >= FAVOR_SETUP.win_geisha_count) return label[w];
+  return null;
+}
+
+function renderFavorSetup() {
+  const picks = FAVOR_SETUP.picks;
+  const won = alreadyWonBy(picks);
+  const names = { null: 'Neutral', you: 'You', ai: 'AI' };
+  const cycle = [null, 'you', 'ai'];
+  return el('section', { class: 'setup' },
+    el('div', {}, el('h1', {}, 'Starting favors'),
+       el('p', { class: 'lede' }, 'Click a geisha to cycle her favor: neutral, you, the AI.')),
+    el('div', { class: 'favor-board' }, ...FAVOR_SETUP.geishas.map((g, i) =>
+      el('button', { class: 'favor-pick', 'data-owner': String(picks[i]), 'aria-label': `${suitLabel(g.name)}: ${names[picks[i]]}`,
+                     onclick: () => { picks[i] = cycle[(cycle.indexOf(picks[i]) + 1) % 3]; UI.setupError = ''; render(); } },
+        cardEl(g.name), el('span', { class: 'who' }, names[picks[i]])))),
+    el('p', { class: 'error' }, won ? `${won} would already have won with these favors. Choose favors where nobody has won yet.` : UI.setupError),
+    el('div', { class: 'row' },
+      el('button', { class: 'secondary', onclick: () => { UI.screen = 'setup'; UI.setupError = ''; render(); } }, 'Back'),
+      el('button', { class: 'secondary', onclick: () => {
+        for (let attempt = 0; attempt < 1000; attempt++) {     // re-draw until nobody has already won
+          FAVOR_SETUP.picks = FAVOR_SETUP.geishas.map(() => cycle[Math.floor(Math.random() * 3)]);
+          if (alreadyWonBy(FAVOR_SETUP.picks) === null) break;
+        }
+        render();
+      } }, 'Randomize'),
+      el('button', { class: 'primary', disabled: won !== null, onclick: () => {
+        // engine values: player 0 holds = -1, player 1 holds = +1
+        const youValue = SETUP.player === 0 ? -1 : 1;
+        const favors = {};
+        FAVOR_SETUP.geishas.forEach((g, i) => { if (picks[i]) favors[g.name] = picks[i] === 'you' ? youValue : -youValue; });
+        startGame(favors);
+      } }, 'Begin round')));
+}
+
+function standing(owner) {
+  let count = 0, pts = 0;
+  for (const g of S.geishas) if (ownerOf(g.favor) === owner) { count += 1; pts += g.rank; }
+  return { count, pts };
+}
+function tracker(owner) {
+  const s = standing(owner);
+  const rows = [['Geishas', s.count, S.win_geisha_count]];
+  if (S.win_favor_points !== null) rows.push(['Points', s.pts, S.win_favor_points]);
+  return el('div', { class: 'tracker', 'aria-label': 'Progress towards winning' },
+    ...rows.map(([name, v, max]) => el('div', {},
+      el('div', {}, `${name} `, el('strong', {}, `${v}/${max}`)),
+      el('div', { class: 'bar' }, el('span', { style: `width:${Math.min(100, 100 * v / max)}%` })))));
+}
+
+function variantActions() {
+  return VARIANTS[SETUP.variant].actions;
+}
+function tokens(who) {
+  const used = who === 'you' ? S.human.used_actions : S.ai.used_actions;
+  const fits = who === 'you' ? typesFittingSelection() : new Set();
+  return el('div', { class: 'tokens', role: 'group', 'aria-label': who === 'you' ? 'Your actions' : "The AI's actions" },
+    ...variantActions().map((a, k) => {
+      const isUsed = used.includes(a);
+      const cls = ['token', isUsed && 'used', fits.has(a) && 'fits'].filter(Boolean).join(' ');
+      const inner = [el('span', { class: 'n' }, String(ACTIONS[a].n)), ACTIONS[a].label];
+      if (who === 'ai') return el('span', { class: cls, title: isUsed ? 'Used this round' : 'Not used yet' }, ...inner);
+      const usable = myTurn() && !respondingToOffer() && legalOf(a).length > 0;
+      return el('button', { class: cls, 'aria-pressed': String(UI.token === a), disabled: !usable,
+                             title: `${ACTIONS[a].hint} (key ${k + 1})`, onclick: () => chooseToken(a) }, ...inner);
+    }));
+}
+
+function renderGame() {
+  const over = S.winner !== null;
+  const pill = over ? el('span', { class: 'pill' }, 'Game over')
+    : S.round_end_summary ? el('span', { class: 'pill' }, 'Round over')
+    : respondingToOffer() ? el('span', { class: 'pill you' }, 'Your choice')
+    : myTurn() ? el('span', { class: 'pill you' }, 'Your turn')
+    : el('span', { class: 'pill ai' }, 'AI to move');
+  const opponent = AGENTS.find(a => a.id === SETUP.agent);
+  const turnShown = Math.min(S.turn + 1, S.turns_per_round);
+
+  const top = el('header', { class: 'topbar' },
+    el('div', {}, el('h2', {}, S.variant_display), el('div', { class: 'win-note' }, S.win_note)),
+    el('div', { class: 'status' }, el('span', {}, `Round ${S.round}`), el('span', {}, `Turn ${turnShown}/${S.turns_per_round}`), pill),
+    el('div', { class: 'tools' },
+      el('button', { onclick: () => { UI.showRules = !UI.showRules; render(); } }, UI.showRules ? 'Hide rules' : 'Rules'),
+      el('button', { onclick: () => { UI.screen = 'setup'; S = null; render(); } }, 'New game')));
+
+  const ai = S.ai;
+  const aiSeat = el('section', { class: 'seat ai-seat', 'aria-label': 'Opponent' },
+    el('div', { class: 'seat-head' }, el('h3', {}, `AI (P${2 - hp()}) · ${opponent ? opponent.label : ''}`), tracker('ai')),
+    el('div', { class: 'seat-body' },
+      el('div', { class: 'backs', 'aria-label': `${ai.hand_count} cards in hand` }, ...Array.from({ length: ai.hand_count }, () => el('div', { class: 'card back' }))),
+      el('div', { class: 'facts' },
+        el('span', {}, 'Hand ', el('strong', {}, String(ai.hand_count))),
+        el('span', {}, 'Reserved ', el('strong', {}, String(ai.reserved_count)), ' face down'),
+        ai.discarded_hidden_count ? el('span', {}, ai.discarded_revealed.length ? 'Discarded ' : 'Traded off ',
+          el('strong', {}, String(ai.discarded_hidden_count + ai.discarded_revealed.length))) : null,
+        ai.discarded_revealed.length ? el('span', {}, 'Shown ', ...ai.discarded_revealed.map(n => cardEl(n, { mini: true }))) : null,
+        el('span', {}, 'Deck ', el('strong', {}, String(S.deck_count)))),
+      tokens('ai')));
+
+  const children = [top];
+  if (UI.showRules) children.push(rulesPanel());
+  children.push(el('div', { class: 'layout' },
+    el('div', { class: 'table' }, aiSeat, boardEl(), centreEl(), yourSeat()),
+    logEl()));
+  const summary = S.round_end_summary || S.game_end_summary;
+  if (summary) children.push(UI.summaryHidden ? summaryBar() : summarySheet(summary));
+  return el('div', {}, ...children);
+}
+
+// Cards that would land on the board, as [your names, AI names].
+function ghostCards() {
+  if (UI.hoverOffer !== null && respondingToOffer()) {
+    const o = S.pending_offer, i = UI.hoverOffer;
+    if (o.type === 'competition') return [o.cards.slice(2 * i, 2 * i + 2), o.cards.slice(2 - 2 * i, 4 - 2 * i)];
+    return [[o.cards[i]], o.cards.filter((_, j) => j !== i)];
+  }
+  if (UI.token === 'reserve' && UI.sel.length === 1) return [[S.human.hand[UI.sel[0]]], []];
+  return [[], []];
+}
+
+function geishaCard(g, owner) {
+  const node = cardEl(g.name, { extra: { class: 'card geisha' } });
+  const who = owner === null ? 'Neutral' : owner === 'you' ? 'You' : 'AI';
+  node.setAttribute('aria-label', `${suitLabel(g.name)}, rank ${g.rank}, favor: ${who}`);
+  node.querySelector('.c-rank').after(el('span', { class: 'favor-tag', 'data-owner': String(owner) },
+    el('span', { class: 'f-cap' }, 'Favor'), el('span', { class: 'f-who' }, who)));
+  return node;
+}
+// A player's card count for one geisha this round; marked with a dot if they hold her favor.
+function countLine(who, owner, text) {
+  const holds = owner === who;
+  return el('span', { class: 'lead' + (holds ? ' holder' : ''), title: holds ? (who === 'you' ? 'You hold her favor' : 'The AI holds her favor') : null },
+    holds ? el('span', { class: 'marker', 'data-owner': who, 'aria-hidden': 'true' }) : null, text);
+}
+
+function boardEl() {
+  const [ghostYou, ghostAi] = ghostCards();
+  const cols = S.geishas.map(g => {
+    const owner = ownerOf(g.favor);
+    const youWon = countOf(S.human.collected, g.name), youReserved = countOf(S.human.reserved, g.name);
+    const aiWon = countOf(S.ai.collected, g.name);
+    const youTotal = youWon + youReserved;
+    const mini = (n, opts = {}) => Array.from({ length: n }, () => cardEl(g.name, { mini: true, ...opts }));
+    return el('div', { class: 'col' },
+      el('div', { class: 'stack ai' }, ...mini(aiWon), ...mini(countOf(ghostAi, g.name), { ghost: true })),
+      countLine('ai', owner, `AI: ${cardsText(aiWon)}`),
+      geishaCard(g, owner),
+      countLine('you', owner, `You: ${cardsText(youTotal)}${youTotal > aiWon ? ' ▲' : ''}`),
+      el('div', { class: 'stack you' }, ...mini(youWon), ...mini(youReserved, { reserved: true }),
+         ...mini(countOf(ghostYou, g.name), { ghost: true })));
+  });
+  const board = el('section', { class: 'board', 'aria-label': 'Geishas' });
+  if (UI.banner.length) board.append(el('div', { class: 'banner', role: 'status' }, ...UI.banner.map(t => el('span', {}, t))));
+  board.append(el('div', { class: 'cols' }, ...cols));
+  return board;
+}
+// Re-render only the board (hover previews, banner timeout), so focus stays where it is.
+function renderBoardOnly() {
+  const old = $('.board');
+  if (old) old.replaceWith(boardEl());
+}
+
+function centreEl() {
+  const errorLine = UI.error ? el('p', { class: 'error' }, UI.error) : null;
+  if (S.winner !== null || S.round_end_summary)
+    return el('section', { class: 'centre waiting' }, el('p', { class: 'prompt' }, S.winner !== null ? 'The game is over.' : 'The round is over.'));
+  if (!myTurn())
+    return el('section', { class: 'centre waiting' }, el('p', { class: 'prompt' }, 'Waiting for the AI…'), errorLine);
+
+  if (respondingToOffer()) {
+    const o = S.pending_offer, isComp = o.type === 'competition';
+    const text = isComp ? 'The AI offers a competition. Take one pair; the AI gets the other.'
+               : o.type === 'gift' ? 'The AI offers a gift. Take one card; the AI keeps the other two.'
+               : 'The AI offers a split. Take one card; the AI gets the other.';
+    const hover = i => ({ onmouseenter: () => { UI.hoverOffer = i; renderBoardOnly(); },
+                          onmouseleave: () => { UI.hoverOffer = null; renderBoardOnly(); },
+                          onfocus: () => { UI.hoverOffer = i; renderBoardOnly(); },
+                          onblur: () => { UI.hoverOffer = null; renderBoardOnly(); } });
+    const options = isComp
+      ? [0, 1].map(i => el('button', { class: 'pair', 'aria-label': `Take pair ${i + 1}`, ...hover(i), onclick: () => respond(i) },
+          ...o.cards.slice(2 * i, 2 * i + 2).map(n => cardEl(n))))
+      : o.cards.map((n, i) => cardEl(n, { tag: 'button', label: 'Take', extra: { ...hover(i), onclick: () => respond(i) } }));
+    return el('section', { class: 'centre offer', 'aria-live': 'polite' },
+      el('p', { class: 'prompt' }, text, el('small', {}, 'Hover over a choice to see where the cards go.')),
+      el('div', { class: 'offer-cards' }, ...options), errorLine);
+  }
+
+  const names = handNames();
+  let prompt, extra = null;
+  if (!UI.token) {
+    prompt = UI.sel.length ? `${cardsText(UI.sel.length)} picked. Choose an action that uses ${UI.sel.length}.`
+                           : 'Choose an action, or pick cards first.';
+  } else {
+    const n = ACTIONS[UI.token].n;
+    prompt = ACTIONS[UI.token].hint + (UI.sel.length < n ? ` ${n - UI.sel.length} more to pick.` : '');
+    if (UI.token === 'discard' && UI.sel.length === 2) {
+      extra = el('div', { class: 'prompt-actions' }, el('span', { class: 'label' }, 'Show'),
+        ...names.map((name, i) => el('button', { class: 'secondary', 'aria-pressed': String(UI.reveal === i),
+          onclick: () => { UI.reveal = i; render(); } }, suitLabel(name))));
+    }
+    if (UI.token === 'competition' && UI.sel.length === 4) {
+      extra = el('div', { class: 'offer-cards' }, ...[0, 1].map(k => el('div', { class: 'pair-slot' },
+        el('span', { class: 'label' }, `Pair ${k + 1}`),
+        el('div', { class: 'pair' }, ...[0, 1].map(j => {
+          const idx = 2 * k + j;
+          return cardEl(names[idx], { tag: 'button', label: UI.pairSwap === idx ? 'Swap…' : null,
+            extra: { 'aria-pressed': String(UI.pairSwap === idx), onclick: () => swapInPairs(idx) } });
+        })))),
+        el('small', { class: 'keys' }, 'Click a card in each pair to swap them.'));
+    }
+    if (UI.sel.length === n && (UI.token !== 'discard' || UI.reveal !== null) && !matchedMove())
+      prompt += ' That is not a legal move.';
+  }
+  const actionCount = variantActions().length;
+  return el('section', { class: 'centre', 'aria-live': 'polite' },
+    el('p', { class: 'prompt' }, prompt), extra,
+    el('div', { class: 'prompt-actions' },
+      el('button', { class: 'primary', disabled: !matchedMove(), onclick: confirmMove },
+        UI.token ? `Confirm ${ACTIONS[UI.token].label.toLowerCase()}` : 'Confirm'),
+      (UI.token || UI.sel.length) ? el('button', { class: 'secondary', onclick: cancelSelection }, 'Cancel') : null,
+      el('span', { class: 'keys' }, el('kbd', {}, '1'), '–', el('kbd', {}, String(actionCount)), ' action · ',
+         el('kbd', {}, 'Enter'), ' confirm · ', el('kbd', {}, 'Esc'), ' cancel')),
+    errorLine);
+}
+
+function yourSeat() {
+  const h = S.human;
+  const order = h.hand.map((name, i) => i).sort((a, b) => geishaIndex(h.hand[a]) - geishaIndex(h.hand[b]));
+  const canPick = myTurn() && !respondingToOffer();
+  const discarded = [...h.discarded_revealed, ...h.discarded_hidden];
+  return el('section', { class: 'seat you-seat', 'aria-label': 'You' },
+    el('div', { class: 'seat-head' }, el('h3', {}, `You (P${hp() + 1})`), tracker('you')),
+    tokens('you'),
+    el('div', { class: 'hand', role: 'group', 'aria-label': 'Your hand' },
+      ...order.map(i => cardEl(h.hand[i], { tag: 'button',
+        label: UI.token === 'discard' && UI.reveal !== null && UI.sel[UI.reveal] === i ? 'Shown' : null,
+        extra: { 'aria-pressed': String(UI.sel.includes(i)), disabled: !canPick, onclick: () => toggleCard(i) } }))),
+    el('div', { class: 'mine' },
+      el('span', { class: 'label' }, 'Reserved'),
+      ...(h.reserved.length ? h.reserved.map(n => cardEl(n, { mini: true, reserved: true })) : ['none']),
+      discarded.length ? el('span', { class: 'label', style: 'margin-left:12px' },
+        h.discarded_revealed.length ? 'Discarded' : 'Traded off') : null,
+      ...discarded.map(n => cardEl(n, { mini: true }))));
+}
+
+// The log: earlier rounds of this game, then the current round, grouped by turn.
+function logEl() {
+  const whoOf = text => text.startsWith('You') ? 'you' : text.startsWith('Opponent') ? 'ai' : '';
+  const roundBlock = (round, entries) => el('div', { class: 'log-round' },
+    el('span', { class: 'label' }, `Round ${round}`),
+    ...entries.map(e => e.bold
+      ? el('span', { class: 'label log-turn' }, e.text)
+      : el('div', { class: 'log-entry ' + whoOf(e.text) }, el('span', { class: 'dot' }), el('span', {}, e.text))));
+  const details = el('details', { class: 'log', open: UI.showLog, ontoggle: e => { UI.showLog = e.target.open; } },
+    el('summary', {}, 'Log'),
+    ...UI.pastLogs.map(p => roundBlock(p.round, p.log)),
+    S.log.length ? roundBlock(S.round, S.log) : el('div', { class: 'log-empty' }, 'No events yet.'));
+  requestAnimationFrame(() => { details.scrollTop = details.scrollHeight; });
+  return details;
+}
+
+function rulesPanel() {
+  const actions = variantActions();
+  return el('section', { class: 'seat rules', 'aria-label': 'Rules' },
+    el('h3', {}, 'How to play'),
+    el('p', {}, 'Each geisha has as many cards as her rank. On your turn you draw a card, then use one of your actions; each action is used once per round.'),
+    ...actions.map(a => el('p', {}, el('strong', {}, ACTIONS[a].label + ': '), ACTIONS[a].hint)),
+    el('p', {}, 'At the end of the round, whoever has more cards of a geisha (won plus reserved) wins her favor; on a tie the favor stays where it was. ' + S.win_note + '.'));
+}
+
+function summarySheet(r) {
+  const over = S.winner !== null;
+  let head;
+  if (over) {
+    const tie = S.winner === -1, won = !tie && S.winner === hp();
+    head = el('div', {},
+      el('div', { class: 'result' }, tie ? 'No winner' : won ? 'You win' : 'The AI wins'),
+      el('div', { class: 'result-sub' }, tie ? 'Nobody reached a winning position this round.' : won ? 'Well played.' : 'Better luck next time.'));
+  } else {
+    head = el('h2', {}, `End of round ${S.round}`);
+  }
+  const wg = r.win_geisha_count, wf = r.win_favor_pts;
+  const need = (g, p) => `${Math.max(wg - g, 0)} more geisha(s)` + (wf != null ? ` or ${Math.max(wf - p, 0)} more points` : '');
+  return el('div', { class: 'overlay', role: 'dialog', 'aria-modal': 'true', 'aria-label': over ? 'Game result' : 'Round summary' },
+    el('div', { class: 'sheet' },
+      head,
+      (r.ai_reserved || []).length ? el('div', { class: 'reveal' }, el('span', { class: 'label' }, 'The AI reserved'),
+        el('div', { class: 'mine' }, ...r.ai_reserved.map((n, i) => cardEl(n, { style: `animation-delay:${i * .25}s` })))) : null,
+      el('div', { class: 'table-wrap' }, el('table', {},
+        el('thead', {}, el('tr', {}, el('th', {}, 'Geisha'), el('th', {}, 'Rank'), el('th', { class: 'you-col' }, 'You'),
+          el('th', { class: 'ai-col' }, 'AI'), el('th', {}, 'Previous favor'), el('th', {}, 'Updated favor'))),
+        el('tbody', {}, ...r.per_geisha.map(g => el('tr', {},
+          el('td', {}, suitLabel(g.name)), el('td', {}, String(g.rank)), el('td', {}, String(g.human_total)),
+          el('td', {}, String(g.ai_total)), el('td', {}, g.prev_favor), el('td', {}, el('strong', {}, g.updated_favor))))))),
+      el('p', {}, `You: ${r.human_geisha_count} geisha(s) · ${r.human_favor_pts} points.  AI: ${r.ai_geisha_count} geisha(s) · ${r.ai_favor_pts} points.`),
+      over ? null : el('div', { class: 'needs' },
+        el('div', {}, `You need ${need(r.human_geisha_count, r.human_favor_pts)}.`),
+        el('div', {}, `The AI needs ${need(r.ai_geisha_count, r.ai_favor_pts)}.`)),
+      el('div', { class: 'row' },
+        over ? el('button', { class: 'primary', onclick: () => { UI.screen = 'setup'; S = null; render(); } }, 'New game')
+             : el('button', { class: 'primary', onclick: () => gameRequest('/next_round', {}) }, `Continue to round ${S.round + 1}`),
+        el('button', { class: 'secondary', onclick: () => { UI.summaryHidden = true; render(); } }, 'View board'))));
+}
+function summaryBar() {
+  return el('div', { class: 'summary-bar' },
+    el('span', {}, S.winner !== null ? 'Game over' : `Round ${S.round} is over`),
+    el('button', { class: 'secondary', onclick: () => { UI.summaryHidden = false; render(); } }, 'Show summary'));
+}
+
+document.addEventListener('keydown', e => {
+  if (UI.screen !== 'game' || !S || e.target.closest('input, textarea, select')) return;
+  if (e.key === 'Escape') cancelSelection();
+  else if (e.key === 'Enter' && matchedMove() && !e.target.closest('button')) { e.preventDefault(); confirmMove(); }
+  else if (/^[1-9]$/.test(e.key)) {
+    const a = variantActions()[Number(e.key) - 1];
+    if (a) chooseToken(a);
+  }
+});
+
+render();
+loadAgentList();
+</script>
+</body>
+</html>
