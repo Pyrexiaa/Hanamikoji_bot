@@ -1,0 +1,6 @@
+numpy>=2.0                 # tested with 2.0.2 and 2.5.4
+# Only needed to build the optional C++ engine (CPP_ENGINE.md):
+cmake>=3.21
+ninja
+pybind11>=3.0
+scikit-build-core>=0.9
