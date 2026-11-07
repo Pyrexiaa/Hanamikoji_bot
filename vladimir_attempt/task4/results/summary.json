@@ -1,0 +1,149 @@
+{
+  "python": "3.13.0 (v3.13.0:60403a5409f, Oct  7 2024, 00:37:40) [Clang 15.0.0 (clang-1500.3.9.4)]",
+  "numpy": "2.5.4",
+  "platform": "macOS-15.6.1-arm64-arm-64bit-Mach-O",
+  "machine": "arm64",
+  "iterations": 20000,
+  "repeats": 3,
+  "checkpoints": [
+    1,
+    2,
+    5,
+    10,
+    20,
+    50,
+    100,
+    200,
+    500,
+    1000,
+    2000,
+    5000,
+    10000,
+    20000
+  ],
+  "methods": {
+    "CFR": {},
+    "CFR-linear": {
+      "averaging": "linear"
+    },
+    "RM+": {
+      "regret_matching_plus": true
+    },
+    "RM+-linear": {
+      "regret_matching_plus": true,
+      "averaging": "linear"
+    },
+    "CFR+": {
+      "regret_matching_plus": true,
+      "averaging": "linear",
+      "alternating": true
+    }
+  },
+  "games": {
+    "neutral": {
+      "build_seconds": 0.5795605839957716,
+      "sequences": [
+        3672,
+        3672
+      ],
+      "infosets": [
+        2757,
+        2757
+      ],
+      "stored_pairs": 12832,
+      "nonzero_pairs": 2816,
+      "lp": {
+        "maximin_value": -0.0,
+        "minimax_value": 0.0,
+        "duality_gap": 0.0,
+        "profile_payoff": 0.0,
+        "max_flow_error_p1": 3.3306690738754696e-16,
+        "max_flow_error_p2": 2.220446049250313e-16,
+        "min_probability_p1": -0.0,
+        "min_probability_p2": -0.0,
+        "nonzero_payoff_pairs": 2816,
+        "build_seconds": 0.0050360830064164475,
+        "p1_solve_seconds": 0.027401375002227724,
+        "p2_solve_seconds": 0.023389082998619415,
+        "solve_seconds": 0.05079045800084714,
+        "total_seconds": 0.05756891600321978,
+        "p1_lp_iterations": 299,
+        "p2_lp_iterations": 301
+      },
+      "lp_lower": -1.734723475976807e-18,
+      "lp_upper": 5.204170427930421e-18,
+      "lp_flow_error": 3.3306690738754696e-16,
+      "submitted_method": "CFR+",
+      "submitted_iterations": 20000,
+      "submitted_spr": 1.2924150985810161e-06
+    },
+    "advantage": {
+      "build_seconds": 0.635128750000149,
+      "sequences": [
+        3672,
+        3672
+      ],
+      "infosets": [
+        2757,
+        2757
+      ],
+      "stored_pairs": 12832,
+      "nonzero_pairs": 6108,
+      "lp": {
+        "maximin_value": 0.26344671201814057,
+        "minimax_value": 0.2634467120181405,
+        "duality_gap": -5.551115123125783e-17,
+        "profile_payoff": 0.26344671201814057,
+        "max_flow_error_p1": 2.220446049250313e-16,
+        "max_flow_error_p2": 5.551115123125783e-17,
+        "min_probability_p1": -0.0,
+        "min_probability_p2": -0.0,
+        "nonzero_payoff_pairs": 6108,
+        "build_seconds": 0.007066707999911159,
+        "p1_solve_seconds": 0.04202045900456142,
+        "p2_solve_seconds": 0.02929408299678471,
+        "solve_seconds": 0.07131454200134613,
+        "total_seconds": 0.07985533299506642,
+        "p1_lp_iterations": 719,
+        "p2_lp_iterations": 594
+      },
+      "lp_lower": 0.2634467120181403,
+      "lp_upper": 0.26344671201814024,
+      "lp_flow_error": 2.220446049250313e-16
+    },
+    "contested": {
+      "build_seconds": 0.6131354999961331,
+      "sequences": [
+        3672,
+        3672
+      ],
+      "infosets": [
+        2757,
+        2757
+      ],
+      "stored_pairs": 12832,
+      "nonzero_pairs": 7224,
+      "lp": {
+        "maximin_value": 0.22821428571428568,
+        "minimax_value": 0.22821428571428573,
+        "duality_gap": 5.551115123125783e-17,
+        "profile_payoff": 0.22821428571428568,
+        "max_flow_error_p1": 1.1102230246251565e-16,
+        "max_flow_error_p2": 7.771561172376096e-16,
+        "min_probability_p1": -0.0,
+        "min_probability_p2": -0.0,
+        "nonzero_payoff_pairs": 7224,
+        "build_seconds": 0.0066858749923994765,
+        "p1_solve_seconds": 0.04092900000978261,
+        "p2_solve_seconds": 0.03160379099426791,
+        "solve_seconds": 0.07253279100405052,
+        "total_seconds": 0.08050541700504255,
+        "p1_lp_iterations": 688,
+        "p2_lp_iterations": 648
+      },
+      "lp_lower": 0.22821428571428537,
+      "lp_upper": 0.22821428571428531,
+      "lp_flow_error": 7.771561172376096e-16
+    }
+  }
+}

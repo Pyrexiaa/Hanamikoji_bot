@@ -1,0 +1,23 @@
+=== task1.ipynb ===
+--- Code cell 2 ---
+--- Code cell 5 ---
+--- Code cell 8 ---
+Total number of leaves in the game tree: 12832
+--- Code cell 10 ---
+RandomAgent (Player 1) vs GreedyAgent (Player 2): Player 1's expected payoff = +0.0008
+--- Code cell 13 ---
+RandomAgent: 20 of 20 information sets reachable; every posterior sums to 1
+GreedyAgent: 11 of 20 information sets reachable; every posterior sums to 1
+PASS: 5 code cells executed.
+
+=== task2.ipynb ===
+--- Code cell 2 ---
+Player 1: 3672 sequences, 2757 information sets
+Player 2: 3672 sequences, 2757 information sets
+--- Code cell 5 ---
+CardCountingAgent's sequence-form strategy satisfies the constraints.
+--- Code cell 9 ---
+ RandomAgent vs CardCounting: -0.0167   SPR of the profile: 0.2496
+ GreedyAgent vs CardCounting: -0.0286   SPR of the profile: 0.3857
+Best response vs CardCounting: +0.1238
+PASS: 3 code cells executed.
