@@ -166,14 +166,78 @@ class DoubleOracleTests(unittest.TestCase):
         np.testing.assert_allclose(x, [1, .6, .4], atol=1e-9)
         np.testing.assert_allclose(y, [1, .4, .6], atol=1e-9)
         self.assertLess(solver.spr, 1e-9)
-        # Without a target, DO stops once neither oracle offers a new plan.
-        self.assertEqual(solver.stop_reason, "no_new_strategy")
+        # With stopping disabled, stable supports still get real oracle rounds.
+        self.assertEqual(solver.stop_reason, "iteration_limit")
+        self.assertEqual(solver.last_iterations, 25)
         old_iterations = solver.iterations
         old_plans = x.copy(), y.copy()
         result = solver.solve(max_iter=0)
         self.assertEqual(solver.iterations, old_iterations)
         for actual, expected in zip(result, old_plans):
             np.testing.assert_array_equal(actual, expected)
+
+    def test_full_budget_recertifies_stable_support_without_repeated_lps(self):
+        for threshold in (None, -1):
+            with self.subTest(threshold=threshold):
+                game = make_matrix_game([[2, -1], [-1, 1]])
+                solver = DoubleOracleSolver(game)
+                oracle_calls = []
+                original = solver.compute_best_response
+
+                def counted(*args, **kwargs):
+                    oracle_calls.append(solver.iterations)
+                    return original(*args, **kwargs)
+
+                solver.compute_best_response = counted
+                x, y = solver.solve(max_iter=30, spr_threshold=threshold)
+                self.assertEqual(solver.iterations, 30)
+                self.assertEqual(solver.last_iterations, 30)
+                self.assertEqual(solver.stop_reason, "iteration_limit")
+                self.assertFalse(solver.converged)
+                self.assertEqual(oracle_calls, [i for i in range(31) for _ in range(2)])
+                self.assertEqual(solver.training_br_calls, 60)
+                self.assertEqual(solver.diagnostic_br_calls, 2)
+                self.assertEqual([row["iteration"] for row in solver.history], list(range(31)))
+                self.assertTrue(all(row["training_br_calls"] == 2 * row["iteration"]
+                                    for row in solver.history))
+                np.testing.assert_allclose(x, [1, .4, .6], atol=1e-9)
+                np.testing.assert_allclose(y, [1, .4, .6], atol=1e-9)
+                stable = solver.history[10:]
+                self.assertTrue(all(row["restricted_lp_solves"] == solver.restricted_lp_solves
+                                    for row in stable))
+                self.assertTrue(all(row["spr"] < 1e-9 for row in stable))
+                self.assertTrue(all(a["elapsed_seconds"] < b["elapsed_seconds"]
+                                    for a, b in zip(solver.history, solver.history[1:])))
+
+                lp_count = solver.restricted_lp_solves
+                support_counts = solver.support_counts
+                solver.solve(max_iter=7, spr_threshold=threshold)
+                self.assertEqual(solver.iterations, 37)
+                self.assertEqual(solver.last_iterations, 7)
+                self.assertEqual(solver.training_br_calls, 74)
+                self.assertEqual(solver.diagnostic_br_calls, 4)
+                self.assertEqual(len(oracle_calls), 2 * 31 + 2 * 8)
+                self.assertEqual(solver.restricted_lp_solves, lp_count)
+                self.assertEqual(solver.support_counts, support_counts)
+
+                actual = solver.solve(max_iter=30, spr_threshold=threshold, reset=True)
+                fresh = DoubleOracleSolver(game)
+                expected = fresh.solve(max_iter=30, spr_threshold=threshold)
+                for first, second in zip(actual, expected):
+                    np.testing.assert_allclose(first, second, atol=1e-12)
+                self.assertEqual(solver.iterations, 30)
+                self.assertEqual(solver.training_br_calls, fresh.training_br_calls)
+                self.assertEqual(solver.diagnostic_br_calls, fresh.diagnostic_br_calls)
+                self.assertEqual(solver.restricted_lp_solves, fresh.restricted_lp_solves)
+
+    def test_enabled_target_preserves_no_new_strategy_stop(self):
+        solver = DoubleOracleSolver(make_matrix_game([[2, -1], [-1, 1]]))
+        # This LP equilibrium has a tiny positive floating-point residual, so a
+        # zero target leaves the duplicate-response stopping rule observable.
+        solver.solve(max_iter=30, spr_threshold=0)
+        self.assertLess(solver.iterations, 30)
+        self.assertIn(solver.stop_reason, ("spr_threshold", "no_new_strategy"))
+        self.assertLess(abs(solver.spr), 1e-9)
 
     def test_full_tiny_certificate_against_independent_linear_programs(self):
         from scipy.optimize import linprog

@@ -1,6 +1,7 @@
-"""Compare three solver families under one iteration cap and SPR target."""
+"""Compare three solver families through a common full iteration budget."""
 from __future__ import annotations
 import argparse
+import gzip
 import hashlib
 import json
 import os
@@ -27,6 +28,70 @@ from treeplex_representation import (TreeplexGame,
 METHODS = {'CFR': CFRSolver, 'Fictitious play': FictitiousPlaySolver,
            'Double oracle': DoubleOracleSolver}
 CONFIG_PATH = Path(__file__).with_name('experiment_config.json')
+SUMMARY_CHECKPOINTS = (25, 100, 500, 1000, 2000, 5000, 10000, 20000)
+METHOD_SLUGS = {'CFR': 'cfr', 'Fictitious play': 'fictitious_play',
+                'Double oracle': 'double_oracle'}
+
+
+def history_cadence(label, config):
+    """CFR pays for sparse certificates; the other families already certify every step."""
+    return config['check_every'] if label == 'CFR' else 1
+
+
+def validate_main_run(learner, label, config):
+    """Require actual updates and complete measured observations, without padding."""
+    if config['full_budget'] and learner.iterations != config['iterations']:
+        raise RuntimeError(f'{label} completed {learner.iterations} of '
+                           f'{config["iterations"]} requested full-budget iterations')
+    cadence = history_cadence(label, config)
+    expected = list(range(0, learner.iterations + 1, cadence))
+    if expected[-1] != learner.iterations:
+        expected.append(learner.iterations)
+    observed = [entry['iteration'] for entry in learner.history]
+    if observed != expected:
+        raise RuntimeError(f'{label} history does not contain every expected certificate '
+                           f'(cadence {cadence}, final iteration {learner.iterations})')
+
+
+def save_history(raw_history, constructor_seconds, label, scenario_name, repeat,
+                 config, results_directory):
+    """Archive every measured certificate and retain exact report checkpoints."""
+    history = []
+    for observation in raw_history:
+        entry = dict(observation)
+        entry['solve_elapsed_seconds'] = entry['elapsed_seconds']
+        entry['elapsed_seconds'] += constructor_seconds
+        history.append(entry)
+    first_target = next((entry for entry in history
+                         if entry['spr'] <= config['spr_threshold']), None)
+    final_iteration = history[-1]['iteration']
+    summary_iterations = sorted(set(config.get('summary_checkpoints', SUMMARY_CHECKPOINTS))
+                                | {config['iterations']})
+    by_iteration = {entry['iteration']: entry for entry in history}
+    # No interpolation: a nonstandard CFR cadence may omit a requested checkpoint.
+    summary = [dict(by_iteration[iteration]) for iteration in summary_iterations
+               if iteration in by_iteration]
+    compact_every = config.get('history_output_every', 25)
+    retained = {0, final_iteration}
+    if first_target is not None:
+        retained.add(first_target['iteration'])
+    retained.update(entry['iteration'] for entry in summary)
+    compact = [entry for entry in history
+               if entry['iteration'] % compact_every == 0 or entry['iteration'] in retained]
+    relative_path = Path('histories') / f'{scenario_name}_{METHOD_SLUGS[label]}_r{repeat + 1}.jsonl.gz'
+    path = Path(results_directory) / relative_path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    # Compression and serialization occur after the measured constructor + solve.
+    with gzip.open(path, 'wt', encoding='utf-8') as stream:
+        for entry in history:
+            stream.write(json.dumps(entry, separators=(',', ':'), allow_nan=False) + '\n')
+    return {'history': compact, 'history_file': relative_path.as_posix(),
+            'history_records': len(history), 'history_cadence': history_cadence(label, config),
+            'history_sha256': hashlib.sha256(path.read_bytes()).hexdigest(),
+            'history_output_every': compact_every, 'first_target': first_target,
+            'ever_reached_target': first_target is not None, 'summary_checkpoints': summary,
+            'unrecorded_summary_checkpoints': [iteration for iteration in summary_iterations
+                if iteration <= final_iteration and iteration not in by_iteration]}
 
 
 def check_plan(plan, tree):
@@ -72,14 +137,15 @@ def scenario(name):
     raise ValueError(f'Unknown scenario {name}')
 
 
-def benchmark(name, config):
+def benchmark(name, config, results_directory):
     started=time.perf_counter()
     game=scenario(name)
     build_seconds=time.perf_counter()-started
     evaluator=Solver(game)
     # All methods get a discarded warm-up; optimizer imports are outside timed runs.
-    for cls in METHODS.values():
-        cls(game,check_every=config['check_every']).solve(max_iter=config['warmup_iterations'],spr_threshold=-1)
+    for label, cls in METHODS.items():
+        cls(game,check_every=history_cadence(label,config)).solve(
+            max_iter=config['warmup_iterations'],spr_threshold=None)
     solve_sequence_form_lp(game,tolerance=config['lp_tolerance'])
     methods={label:[] for label in METHODS}
     for repeat in range(config['repeats']):
@@ -87,7 +153,7 @@ def benchmark(name, config):
         offset=repeat % len(labels)
         for label in labels[offset:]+labels[:offset]:
             started=time.perf_counter()
-            learner=METHODS[label](game,check_every=config['check_every'])
+            learner=METHODS[label](game,check_every=history_cadence(label,config))
             constructor_seconds=time.perf_counter()-started
             total_br_calls=[0]
             original=learner.compute_best_response
@@ -95,20 +161,20 @@ def benchmark(name, config):
                 total_br_calls[0]+=1
                 return original(*args,**kwargs)
             learner.compute_best_response=counted
-            threshold=-1 if config['full_budget'] else config['spr_threshold']
+            threshold=None if config['full_budget'] else config['spr_threshold']
             x,y=learner.solve(max_iter=config['iterations'],spr_threshold=threshold)
             wall_seconds=time.perf_counter()-started
+            validate_main_run(learner,label,config)
             feasibility=[check_plan(plan,tree) for plan,tree in [(x,game.treeplex_p1),(y,game.treeplex_p2)]]
             independent_spr=float(evaluator.saddle_point_residual(x,y))
             assert abs(independent_spr-learner.spr)<1e-10
-            histories=[]
-            for h in learner.history:
-                entry=dict(h)
-                entry['solve_elapsed_seconds']=entry['elapsed_seconds']
-                entry['elapsed_seconds']+=constructor_seconds
-                histories.append(entry)
+            history_record=save_history(learner.history,constructor_seconds,label,name,repeat,
+                                        config,results_directory)
             training_br_calls=int(getattr(learner,'training_br_calls',getattr(learner,'br_calls',0)))
             record={'repeat':repeat,'iterations':learner.iterations,
+                    'requested_iterations':config['iterations'],
+                    'full_budget':config['full_budget'],
+                    'completed_full_budget':learner.iterations==config['iterations'],
                     'reached_target':bool(learner.spr<=config['spr_threshold']),
                     'wall_seconds':wall_seconds,'constructor_seconds':constructor_seconds,
                     'spr':float(learner.spr),'independent_spr':independent_spr,'value':float(learner.val),
@@ -119,8 +185,9 @@ def benchmark(name, config):
                     'support_counts':list(getattr(learner,'support_counts',())),
                     'active_support_counts':[int(np.count_nonzero(w>1e-12)) for w in
                         (learner.weights_p1,learner.weights_p2)] if hasattr(learner,'weights_p1') else [],
-                    'history':histories,
-                    'first_target':next((h for h in histories if h['spr']<=config['spr_threshold']),None)}
+                    **history_record}
+            if hasattr(learner,'stop_reason'):
+                record['stop_reason']=learner.stop_reason
             if hasattr(learner,'current_seq_form_p1'):
                 record['current_spr']=float(evaluator.saddle_point_residual(learner.current_seq_form_p1,learner.current_seq_form_p2))
             methods[label].append(record)
@@ -190,7 +257,9 @@ def lp_versus_cfr(game, config):
         up = evaluator.compute_payoffs_from_seq_form_strategies(evaluator.compute_best_response(0, y, True), y)
         lo = evaluator.compute_payoffs_from_seq_form_strategies(x, evaluator.compute_best_response(1, x, True))
         return float(v - lo), float(up - v)
-    result = {'lp_value': v, 'cfr_iterations': cfr.iterations, 'cfr_value': float(cfr.val),
+    result = {'protocol': {'max_iterations': config['iterations'],
+                          'spr_threshold': config['spr_threshold'], 'full_budget': False},
+              'lp_value': v, 'cfr_iterations': cfr.iterations, 'cfr_value': float(cfr.val),
               'cfr_spr': float(cfr.spr), 'cfr_exploitability_p1_p2': split(xc, yc),
               'lp_exploitability_p1_p2': split(xl, yl),
               'cross_spr_lpP1_cfrP2': float(evaluator.saddle_point_residual(xl, yc)),
@@ -249,7 +318,14 @@ def lp_versus_cfr(game, config):
 
 def analysis(config, games):
     """Untimed diagnostics behind the report's discussion (one run each)."""
-    out = {'double_oracle_exact': {}, 'rates': {}}
+    out = {'double_oracle_exact': {}, 'rates': {}, 'protocols': {
+        'double_oracle_exact': {'max_iterations': 1000, 'spr_threshold': 1e-9,
+                                'full_budget': False, 'repeats': 1},
+        'rates': {'max_iterations': config['iterations'], 'spr_threshold': None,
+                  'full_budget': True, 'check_every': config['check_every'], 'repeats': 1},
+        'lp_versus_cfr': {'max_iterations': config['iterations'],
+                         'spr_threshold': config['spr_threshold'],
+                         'full_budget': False, 'repeats': 1}}}
     for name, game in games.items():
         # DO to an exact equilibrium: stop at certified SPR <= 1e-9 (LP accuracy).
         learner = DoubleOracleSolver(game)
@@ -268,12 +344,13 @@ def analysis(config, games):
         learner.solve(max_iter=1000, spr_threshold=1e-9)
         wall = time.perf_counter() - started
         h = learner.history
-        target = next(q for q in h if q['spr'] <= config['spr_threshold'])
+        target = next((q for q in h if q['spr'] <= config['spr_threshold']), None)
         out['double_oracle_exact'][name] = {
             'stop_reason': learner.stop_reason, 'iterations': learner.iterations,
             'spr': float(learner.spr), 'wall_seconds': wall, 'restricted_lp_seconds': lp_seconds[0],
             'restricted_lp_trace': lp_trace,
-            'target_iteration': target['iteration'], 'target_seconds': target['elapsed_seconds'],
+            'target_iteration': target['iteration'] if target is not None else None,
+            'target_seconds': target['elapsed_seconds'] if target is not None else None,
             'support_counts': list(learner.support_counts),
             'active_support_counts': [int(np.count_nonzero(w > 1e-12)) for w in (learner.weights_p1, learner.weights_p2)],
             'history': h}
@@ -283,8 +360,9 @@ def analysis(config, games):
     for label, cls in (('CFR', CFRSolver), ('Fictitious play', FictitiousPlaySolver)):
         learner = cls(game, check_every=config['check_every'])
         learner.solve(max_iter=config['iterations'], spr_threshold=None)
-        h = [q for q in learner.history if q['iteration'] >= 100]
-        slope = float(np.polyfit(np.log([q['iteration'] for q in h]), np.log([q['spr'] for q in h]), 1)[0])
+        h = [q for q in learner.history if q['iteration'] >= 100 and q['spr'] > 0]
+        slope = (float(np.polyfit(np.log([q['iteration'] for q in h]),
+                                 np.log([q['spr'] for q in h]), 1)[0]) if len(h) >= 2 else None)
         entry = {'slope_100_to_end': slope, 'final_iteration': learner.iterations, 'final_spr': float(learner.spr)}
         if label == 'CFR':
             entry['last_iterate_spr'] = float(evaluator.saddle_point_residual(
@@ -308,37 +386,55 @@ def hardware_info():
     return cpu,ram
 
 
-def main():
+def parse_arguments(argv=None):
     config=json.loads(CONFIG_PATH.read_text())
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--iterations',type=int,default=config['iterations'])
     parser.add_argument('--spr-threshold',type=float,default=config['spr_threshold'])
     parser.add_argument('--repeats',type=int,default=config['repeats'])
     parser.add_argument('--check-every',type=int,default=config['check_every'])
-    parser.add_argument('--full-budget',action='store_true',help='Measure all iterations without early stopping; retain the SPR target for evaluation.')
+    stopping=parser.add_mutually_exclusive_group()
+    stopping.add_argument('--full-budget',dest='full_budget',action='store_true',
+                          help='Complete all requested iterations; retain the SPR target for evaluation (default).')
+    stopping.add_argument('--early-stop',dest='full_budget',action='store_false',
+                          help='Stop each main run at its first certified SPR target crossing.')
+    parser.set_defaults(full_budget=config.get('full_budget',True))
     parser.add_argument('--output',type=Path,default=ATTEMPT/'task4'/'results'/'experiments.json')
-    args=parser.parse_args()
+    args=parser.parse_args(argv)
     config.update({'iterations':args.iterations,'spr_threshold':args.spr_threshold,
                    'repeats':args.repeats,'check_every':args.check_every,'full_budget':args.full_budget})
     if config['iterations']<1 or config['repeats']<1 or config['check_every']<1:parser.error('Iteration, repetition, and checkpoint counts must be positive.')
     if not np.isfinite(config['spr_threshold']) or config['spr_threshold']<=0:parser.error('SPR target must be finite and positive.')
+    return args,config
+
+
+def main():
+    args,config=parse_arguments()
     import scipy
     cpu,ram=hardware_info()
     sources=[ATTEMPT/'student_attempts'/name for name in ['solver.py','fictitious_play.py','double_oracle.py','lp_solver.py','treeplex_representation.py']]+[Path(__file__),CONFIG_PATH]
-    output={'schema_version':2,'configuration':config,'environment':{
+    output={'schema_version':3,'configuration':config,
+        'main_protocol': {'max_iterations':config['iterations'],
+            'spr_target':config['spr_threshold'],'full_budget':config['full_budget'],
+            'stopping_enabled':not config['full_budget'],
+            'history_cadence_by_method':{label:history_cadence(label,config) for label in METHODS},
+            'first_target':'First recorded certificate at or below the target: CFR checks every check_every iterations, FP and DO every iteration. A later rise does not erase this observation.',
+            'history_storage':'Each history_file is relative to this JSON file and contains all measured observations as gzip JSONL. Main history contains exact regular history_output_every checkpoints, the first target certificate, summary_checkpoints, and the final observation; no interpolation.',
+            'scope':'Full-budget or early-stop mode applies to main scenario/method repetitions. Subsidiary analyses have their own explicit protocols.'},
+        'environment':{
         'python':sys.version,'numpy':np.__version__,'scipy':scipy.__version__,
         'platform':platform.platform(),'cpu':cpu,'ram_bytes':ram,'cpu_count':os.cpu_count(),'engine':'Python','seed':None,
-        'timing':'Warmed runs, constructor + solve including exact SPR certificates (CFR: two extra BRs every check_every iterations; FP and DO: free, every iteration, from their own oracle calls); excludes tree construction, post-run independent validation, policy export, and the untimed analysis section. History times include constructor. All repetitions rotate method order.',
+        'timing':'Warmed runs, constructor + solve including exact SPR certificates (CFR: two extra BRs every check_every iterations; FP and DO: every iteration, reusing their own oracle values) and in-memory history logging (CFR every check_every, FP and DO every iteration). Excludes tree construction, post-run independent validation, history compression and serialization, policy export, and the analysis section. History elapsed_seconds includes constructor; solve_elapsed_seconds excludes it. All repetitions rotate method order.',
         'source_sha256':{str(p.relative_to(ATTEMPT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sources}},'scenarios':{}}
     args.output.parent.mkdir(parents=True,exist_ok=True)
     games={}
     for name in config['scenarios']:
-        output['scenarios'][name],games[name]=benchmark(name,config)
+        output['scenarios'][name],games[name]=benchmark(name,config,args.output.parent)
         output['peak_process_rss_mib']=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/(1024**2 if sys.platform=='darwin' else 1024)
         args.output.write_text(json.dumps(output,indent=2)+'\n')
     output['analysis']=analysis(config,games)
     for name,q in output['analysis']['double_oracle_exact'].items():
-        print(f"{name}: DO reaches the target at iteration {q['target_iteration']} and SPR<=1e-9 at {q['iterations']} ({q['stop_reason']})",flush=True)
+        print(f"{name}: DO target iteration={q['target_iteration']}; exact-check run ends at {q['iterations']} with SPR={q['spr']:.8g} ({q['stop_reason']})",flush=True)
     args.output.write_text(json.dumps(output,indent=2)+'\n')
     print(args.output)
 

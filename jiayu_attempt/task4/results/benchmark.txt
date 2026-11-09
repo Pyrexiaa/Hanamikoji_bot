@@ -1,45 +1,45 @@
-neutral: CFR, repeat 1: iterations=1550, SPR=0.0019695242, target=True, 0.277s
-neutral: Fictitious play, repeat 1: iterations=1576, SPR=0.0019994766, target=True, 0.263s
-neutral: Double oracle, repeat 1: iterations=101, SPR=0.0019660504, target=True, 0.396s
-neutral: Fictitious play, repeat 2: iterations=1576, SPR=0.0019994766, target=True, 0.277s
-neutral: Double oracle, repeat 2: iterations=101, SPR=0.0019660504, target=True, 0.381s
-neutral: CFR, repeat 2: iterations=1550, SPR=0.0019695242, target=True, 0.280s
-neutral: Double oracle, repeat 3: iterations=101, SPR=0.0019660504, target=True, 0.377s
-neutral: CFR, repeat 3: iterations=1550, SPR=0.0019695242, target=True, 0.279s
-neutral: Fictitious play, repeat 3: iterations=1576, SPR=0.0019994766, target=True, 0.265s
-neutral: LP independent SPR=8.67e-18, value=8.6736174e-19
-first_player: CFR, repeat 1: iterations=1550, SPR=0.0019695242, target=True, 0.166s
-first_player: Fictitious play, repeat 1: iterations=1576, SPR=0.0019994766, target=True, 0.157s
-first_player: Double oracle, repeat 1: iterations=57, SPR=7.6327833e-17, target=True, 0.127s
-first_player: Fictitious play, repeat 2: iterations=1576, SPR=0.0019994766, target=True, 0.157s
-first_player: Double oracle, repeat 2: iterations=57, SPR=7.6327833e-17, target=True, 0.126s
-first_player: CFR, repeat 2: iterations=1550, SPR=0.0019695242, target=True, 0.168s
-first_player: Double oracle, repeat 3: iterations=57, SPR=7.6327833e-17, target=True, 0.127s
-first_player: CFR, repeat 3: iterations=1550, SPR=0.0019695242, target=True, 0.167s
-first_player: Fictitious play, repeat 3: iterations=1576, SPR=0.0019994766, target=True, 0.156s
+neutral: CFR, repeat 1: iterations=20000, SPR=0.00041552733, target=True, 7.596s
+neutral: Fictitious play, repeat 1: iterations=20000, SPR=0.00043882726, target=True, 8.184s
+neutral: Double oracle, repeat 1: iterations=20000, SPR=4.4837181e-15, target=True, 17.083s
+neutral: Fictitious play, repeat 2: iterations=20000, SPR=0.00043882726, target=True, 8.261s
+neutral: Double oracle, repeat 2: iterations=20000, SPR=4.4837181e-15, target=True, 16.413s
+neutral: CFR, repeat 2: iterations=20000, SPR=0.00041552733, target=True, 7.448s
+neutral: Double oracle, repeat 3: iterations=20000, SPR=4.4837181e-15, target=True, 15.623s
+neutral: CFR, repeat 3: iterations=20000, SPR=0.00041552733, target=True, 8.416s
+neutral: Fictitious play, repeat 3: iterations=20000, SPR=0.00043882726, target=True, 8.658s
+neutral: LP independent SPR=8.67e-18, value=-8.6736174e-19
+first_player: CFR, repeat 1: iterations=20000, SPR=0.00041552733, target=True, 4.889s
+first_player: Fictitious play, repeat 1: iterations=20000, SPR=0.00043882726, target=True, 5.009s
+first_player: Double oracle, repeat 1: iterations=20000, SPR=9.5999597e-15, target=True, 5.707s
+first_player: Fictitious play, repeat 2: iterations=20000, SPR=0.00043882726, target=True, 4.881s
+first_player: Double oracle, repeat 2: iterations=20000, SPR=9.5999597e-15, target=True, 5.925s
+first_player: CFR, repeat 2: iterations=20000, SPR=0.00041552733, target=True, 4.600s
+first_player: Double oracle, repeat 3: iterations=20000, SPR=9.5999597e-15, target=True, 5.677s
+first_player: CFR, repeat 3: iterations=20000, SPR=0.00041552733, target=True, 4.623s
+first_player: Fictitious play, repeat 3: iterations=20000, SPR=0.00043882726, target=True, 4.858s
 first_player: LP independent SPR=6.94e-18, value=0.019047619
-second_player: CFR, repeat 1: iterations=1550, SPR=0.0019695242, target=True, 0.166s
-second_player: Fictitious play, repeat 1: iterations=1576, SPR=0.0019994766, target=True, 0.158s
-second_player: Double oracle, repeat 1: iterations=59, SPR=0.001149132, target=True, 0.133s
-second_player: Fictitious play, repeat 2: iterations=1576, SPR=0.0019994766, target=True, 0.158s
-second_player: Double oracle, repeat 2: iterations=59, SPR=0.001149132, target=True, 0.133s
-second_player: CFR, repeat 2: iterations=1550, SPR=0.0019695242, target=True, 0.167s
-second_player: Double oracle, repeat 3: iterations=59, SPR=0.001149132, target=True, 0.132s
-second_player: CFR, repeat 3: iterations=1550, SPR=0.0019695242, target=True, 0.167s
-second_player: Fictitious play, repeat 3: iterations=1576, SPR=0.0019994766, target=True, 0.157s
+second_player: CFR, repeat 1: iterations=20000, SPR=0.00041552733, target=True, 4.587s
+second_player: Fictitious play, repeat 1: iterations=20000, SPR=0.00043882726, target=True, 4.761s
+second_player: Double oracle, repeat 1: iterations=20000, SPR=4.6143644e-15, target=True, 5.370s
+second_player: Fictitious play, repeat 2: iterations=20000, SPR=0.00043882726, target=True, 4.684s
+second_player: Double oracle, repeat 2: iterations=20000, SPR=4.6143644e-15, target=True, 5.715s
+second_player: CFR, repeat 2: iterations=20000, SPR=0.00041552733, target=True, 4.690s
+second_player: Double oracle, repeat 3: iterations=20000, SPR=4.6143644e-15, target=True, 5.368s
+second_player: CFR, repeat 3: iterations=20000, SPR=0.00041552733, target=True, 4.314s
+second_player: Fictitious play, repeat 3: iterations=20000, SPR=0.00043882726, target=True, 4.741s
 second_player: LP independent SPR=3.47e-18, value=-0.019047619
-favored_g3: CFR, repeat 1: iterations=675, SPR=0.0019703267, target=True, 0.074s
-favored_g3: Fictitious play, repeat 1: iterations=1386, SPR=0.0019998627, target=True, 0.138s
-favored_g3: Double oracle, repeat 1: iterations=55, SPR=0.0018156771, target=True, 0.119s
-favored_g3: Fictitious play, repeat 2: iterations=1386, SPR=0.0019998627, target=True, 0.140s
-favored_g3: Double oracle, repeat 2: iterations=55, SPR=0.0018156771, target=True, 0.120s
-favored_g3: CFR, repeat 2: iterations=675, SPR=0.0019703267, target=True, 0.075s
-favored_g3: Double oracle, repeat 3: iterations=55, SPR=0.0018156771, target=True, 0.117s
-favored_g3: CFR, repeat 3: iterations=675, SPR=0.0019703267, target=True, 0.074s
-favored_g3: Fictitious play, repeat 3: iterations=1386, SPR=0.0019998627, target=True, 0.140s
+favored_g3: CFR, repeat 1: iterations=20000, SPR=6.937044e-05, target=True, 4.776s
+favored_g3: Fictitious play, repeat 1: iterations=20000, SPR=0.0002128465, target=True, 4.783s
+favored_g3: Double oracle, repeat 1: iterations=20000, SPR=7.3135942e-15, target=True, 6.659s
+favored_g3: Fictitious play, repeat 2: iterations=20000, SPR=0.0002128465, target=True, 4.609s
+favored_g3: Double oracle, repeat 2: iterations=20000, SPR=7.3135942e-15, target=True, 6.022s
+favored_g3: CFR, repeat 2: iterations=20000, SPR=6.937044e-05, target=True, 5.006s
+favored_g3: Double oracle, repeat 3: iterations=20000, SPR=7.3135942e-15, target=True, 6.472s
+favored_g3: CFR, repeat 3: iterations=20000, SPR=6.937044e-05, target=True, 4.616s
+favored_g3: Fictitious play, repeat 3: iterations=20000, SPR=0.0002128465, target=True, 5.071s
 favored_g3: LP independent SPR=0, value=0.057142857
-neutral: DO reaches the target at iteration 101 and SPR<=1e-9 at 117 (spr_threshold)
-first_player: DO reaches the target at iteration 57 and SPR<=1e-9 at 57 (spr_threshold)
-second_player: DO reaches the target at iteration 59 and SPR<=1e-9 at 63 (spr_threshold)
-favored_g3: DO reaches the target at iteration 55 and SPR<=1e-9 at 68 (spr_threshold)
-/sessions/rcw-01excnvpzf4vvbd6d6d5aswc/mnt/Hanamikoji_bot/jiayu_attempt/task4/results/experiments.json
+neutral: DO target iteration=113; exact-check run ends at 122 with SPR=1.0226555e-12 (spr_threshold)
+first_player: DO target iteration=59; exact-check run ends at 59 with SPR=1.2836954e-16 (spr_threshold)
+second_player: DO target iteration=59; exact-check run ends at 59 with SPR=3.8510861e-16 (spr_threshold)
+favored_g3: DO target iteration=66; exact-check run ends at 66 with SPR=1.4710455e-15 (spr_threshold)
+/Users/jiayulim/Documents/GitHub/Hanamikoji_bot/jiayu_attempt/task4/results/experiments.json

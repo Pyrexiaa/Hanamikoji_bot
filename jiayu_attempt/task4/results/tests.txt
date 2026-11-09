@@ -1,5 +1,7 @@
 test_import_and_zero_iteration_evaluation_do_not_require_scipy (test_double_oracle.DoubleOracleImportTests.test_import_and_zero_iteration_evaluation_do_not_require_scipy) ... ok
 test_continuation_and_reset_match_fresh_runs (test_double_oracle.DoubleOracleTests.test_continuation_and_reset_match_fresh_runs) ... ok
+test_enabled_target_preserves_no_new_strategy_stop (test_double_oracle.DoubleOracleTests.test_enabled_target_preserves_no_new_strategy_stop) ... ok
+test_full_budget_recertifies_stable_support_without_repeated_lps (test_double_oracle.DoubleOracleTests.test_full_budget_recertifies_stable_support_without_repeated_lps) ... ok
 test_full_tiny_certificate_against_independent_linear_programs (test_double_oracle.DoubleOracleTests.test_full_tiny_certificate_against_independent_linear_programs) ... ok
 test_matching_pennies_stops_at_uniform_entry_certificate (test_double_oracle.DoubleOracleTests.test_matching_pennies_stops_at_uniform_entry_certificate) ... ok
 test_nonuniform_equilibrium_and_negative_value (test_double_oracle.DoubleOracleTests.test_nonuniform_equilibrium_and_negative_value) ... ok
@@ -7,6 +9,10 @@ test_oracle_certificate_matches_independent_spr_each_iteration (test_double_orac
 test_realization_mixture_respects_shared_parent_flow (test_double_oracle.DoubleOracleTests.test_realization_mixture_respects_shared_parent_flow) ... ok
 test_restricted_gap_cannot_be_used_as_global_certificate (test_double_oracle.DoubleOracleTests.test_restricted_gap_cannot_be_used_as_global_certificate) ... ok
 test_zero_iterations_and_changed_payoffs (test_double_oracle.DoubleOracleTests.test_zero_iterations_and_changed_payoffs) ... ok
+test_budget_and_history_guards_reject_missing_work (test_experiment_protocol.ExperimentProtocolTests.test_budget_and_history_guards_reject_missing_work) ... ok
+test_default_budget_and_explicit_stopping_modes (test_experiment_protocol.ExperimentProtocolTests.test_default_budget_and_explicit_stopping_modes) ... ok
+test_gzip_preserves_all_observations_and_first_crossing (test_experiment_protocol.ExperimentProtocolTests.test_gzip_preserves_all_observations_and_first_crossing) ... ok
+test_nonstandard_cfr_cadence_does_not_interpolate (test_experiment_protocol.ExperimentProtocolTests.test_nonstandard_cfr_cadence_does_not_interpolate) ... ok
 test_average_converges_toward_known_nonuniform_equilibrium (test_fictitious_play.FictitiousPlayTests.test_average_converges_toward_known_nonuniform_equilibrium) ... ok
 test_continuation_and_reset_match_fresh_run (test_fictitious_play.FictitiousPlayTests.test_continuation_and_reset_match_fresh_run) ... ok
 test_free_certificate_is_exact_and_stops_at_first_hit (test_fictitious_play.FictitiousPlayTests.test_free_certificate_is_exact_and_stops_at_first_hit) ... ok
@@ -39,6 +45,6 @@ test_lp_equilibrium_has_independent_best_response_certificate (test_solver.TinyG
 test_sequence_payoff_matches_direct_game_tree_enumeration (test_solver.TinyGameIntegrationTests.test_sequence_payoff_matches_direct_game_tree_enumeration) ... ok
 
 ----------------------------------------------------------------------
-Ran 38 tests in 15.874s
+Ran 44 tests in 32.563s
 
 OK

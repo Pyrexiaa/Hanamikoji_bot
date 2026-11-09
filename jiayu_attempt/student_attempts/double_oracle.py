@@ -29,7 +29,9 @@ class DoubleOracleSolver(Solver):
     restricted-game gap is ~0 by construction and is never used for stopping.
     If neither response is new, both lie in the restricted sets, which implies
     SPR(x_t, y_t) <= 0 up to LP tolerance: (x_t, y_t) is then an exact equilibrium
-    of the full game and the solver stops ("no_new_strategy").
+    of the full game. With an enabled target the solver then stops
+    ("no_new_strategy"). With stopping disabled, it repeatedly certifies that
+    equilibrium through the requested budget without re-solving unchanged LPs.
     """
 
     def __init__(self, treeplex_game, *, check_every=25):
@@ -193,14 +195,16 @@ class DoubleOracleSolver(Solver):
             self.history.append(record)
 
     def solve(self, max_iter=2000, spr_threshold=2e-3, verbose=False, reset=False):
-        """Run up to max_iter additional oracle expansions; return the current plans.
+        """Run up to max_iter additional oracle rounds; return the current plans.
 
         Every iteration certifies the current restricted equilibrium with the two
         oracle calls it needs anyway, and the run stops at the first certified
         SPR <= spr_threshold ("spr_threshold"), when neither oracle finds a new
         plan ("no_new_strategy": exact equilibrium up to LP tolerance), or after
-        max_iter expansions ("iteration_limit"). None or a negative threshold
-        disables the target. max_iter=0 certifies the current restricted
+        max_iter rounds ("iteration_limit"). None or a negative threshold
+        disables both early exits: every round still calls the two global
+        oracles, but unchanged restricted games do not need another LP solve.
+        max_iter=0 certifies the current restricted
         equilibrium (re-solving it first if payoffs changed) without expanding.
         Continuation preserves restricted supports and mixtures; reset=True
         starts with uniform seeds. Fixed-topology payoff changes are refreshed
@@ -244,12 +248,14 @@ class DoubleOracleSolver(Solver):
                     self.stop_reason = "spr_threshold"
                 elif self.iterations - starting_iteration >= max_iter:
                     self.stop_reason = "iteration_limit"
-                elif not self._add_responses(response1, response2):
-                    self.stop_reason = "no_new_strategy"
                 else:
-                    self.training_br_calls += 2
-                    self.iterations += 1
-                    continue
+                    added = self._add_responses(response1, response2)
+                    if not added and target_enabled:
+                        self.stop_reason = "no_new_strategy"
+                    else:
+                        self.training_br_calls += 2
+                        self.iterations += 1
+                        continue
                 self.diagnostic_br_calls += 2
                 self._record(started)
                 return self.sol_seq_form_p1, self.sol_seq_form_p2

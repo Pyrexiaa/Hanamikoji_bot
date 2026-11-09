@@ -37184,13 +37184,13 @@
         "action_type": "split_response",
         "cards": [],
         "choice": 0,
-        "prob": 0.25
+        "prob": 0.2499999999999999
       },
       {
         "action_type": "split_response",
         "cards": [],
         "choice": 1,
-        "prob": 0.75
+        "prob": 0.7500000000000001
       }
     ],
     "p1r1|ROUND_START@t0(hand=[0],favors=[0:0,1:0,2:0],start=1,actions=[reserve,split])|DRAW_CARD@t0(card=2)|OWN_RESERVE@t0(card=0)|OPPONENT_SPLIT@t1(cards=[1,2])|SPLIT_CHOICE@t1(chooser=1,choice=0,chooser_gets=1,offerer_gets=2)|DRAW_CARD@t2(card=0)": [
@@ -46288,13 +46288,13 @@
         "action_type": "split_response",
         "cards": [],
         "choice": 0,
-        "prob": 0.75
+        "prob": 0.7499999999999999
       },
       {
         "action_type": "split_response",
         "cards": [],
         "choice": 1,
-        "prob": 0.25000000000000006
+        "prob": 0.2500000000000001
       }
     ],
     "p1r1|ROUND_START@t0(hand=[1],favors=[0:0,1:0,2:0],start=1,actions=[reserve,split])|DRAW_CARD@t0(card=2)|OWN_RESERVE@t0(card=1)|OPPONENT_SPLIT@t1(cards=[0,2])|SPLIT_CHOICE@t1(chooser=1,choice=0,chooser_gets=0,offerer_gets=2)|DRAW_CARD@t2(card=0)": [
@@ -54332,7 +54332,7 @@
           2
         ],
         "choice": null,
-        "prob": 0.25
+        "prob": 0.25000000000000006
       }
     ],
     "p1r1|ROUND_START@t0(hand=[2],favors=[0:0,1:0,2:0],start=1,actions=[reserve,split])|DRAW_CARD@t0(card=0)|OWN_RESERVE@t0(card=0)|OPPONENT_RESERVE@t1|DRAW_CARD@t2(card=0)": [
@@ -57104,7 +57104,7 @@
         "action_type": "split_response",
         "cards": [],
         "choice": 1,
-        "prob": 0.20000000000000004
+        "prob": 0.20000000000000007
       }
     ],
     "p1r1|ROUND_START@t0(hand=[2],favors=[0:0,1:0,2:0],start=1,actions=[reserve,split])|DRAW_CARD@t0(card=1)|OWN_RESERVE@t0(card=2)|OPPONENT_SPLIT@t1(cards=[0,2])|SPLIT_CHOICE@t1(chooser=1,choice=0,chooser_gets=0,offerer_gets=2)|DRAW_CARD@t2(card=0)": [
