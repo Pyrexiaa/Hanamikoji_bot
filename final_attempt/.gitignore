@@ -1,0 +1,8 @@
+# Additional local artifacts not covered by the repository-root .gitignore.
+~$*.docx
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
