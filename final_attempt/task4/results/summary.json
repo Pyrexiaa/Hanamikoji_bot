@@ -1,0 +1,176 @@
+{
+  "python": "3.12.3 | packaged by conda-forge | (main, Apr 15 2024, 18:20:11) [MSC v.1938 64 bit (AMD64)]",
+  "numpy": "1.26.4",
+  "scipy": "1.16.0",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "machine": "AMD64",
+  "cpu": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel",
+  "cpu_count": 32,
+  "engine": "Python",
+  "solver_source": "student_attempts/solver.py",
+  "lp_source": "student_attempts/lp_solver.py",
+  "iterations": 20000,
+  "repeats": 3,
+  "warmup_iterations": 2,
+  "checkpoints": [
+    1,
+    2,
+    5,
+    10,
+    20,
+    50,
+    100,
+    200,
+    500,
+    1000,
+    2000,
+    5000,
+    10000,
+    20000
+  ],
+  "methods": {
+    "CFR": {},
+    "CFR-linear": {
+      "linear_averaging": true
+    },
+    "RM+": {
+      "regret_matching_plus": true
+    },
+    "RM+-linear": {
+      "regret_matching_plus": true,
+      "linear_averaging": true
+    },
+    "CFR+": {
+      "regret_matching_plus": true,
+      "linear_averaging": true,
+      "alternating": true
+    }
+  },
+  "method_notes": {
+    "CFR": "Simultaneous vanilla CFR with unit-weight regret updates and uniform strategy averaging.",
+    "CFR-linear": "Simultaneous CFR with unit-weight regrets and linear strategy averaging (w_t = t; not full LCFR).",
+    "RM+": "Simultaneous CFR with regret matching+ clipping R <- max(R + r, 0) and uniform strategy averaging.",
+    "RM+-linear": "Simultaneous RM+ clipping with linear strategy averaging (w_t = t; unit-weight regrets).",
+    "CFR+": "Alternating updates (P2 responds to P1's refreshed strategy), RM+ clipping, and linear pre-update strategy averaging."
+  },
+  "averaging_convention": "Canonical CFRSolver averages both players' pre-update realization plans at every iteration (with w_t = t when linear_averaging=True and unit-weight regret accumulation). In alternating mode, Player 1's regrets update first and Player 2 updates regrets against Player 1's updated behavioral/sequence strategy, while both pre-update plans enter the strategy average.",
+  "determinism_note": "All five CFR variants are deterministic; repetitions provide timing variance across rotated execution orders rather than stochastic learning trajectories.",
+  "timing_definition": "elapsed_solve_seconds records cumulative wall-clock time spent inside CFRSolver.solve() across the segmented checkpoint calls, including entry and exit exact SPR certificates per segment, after a 2-iteration warm-up. Excludes game construction, LP reference solves, CSV/JSON writes, current_spr diagnostics, and plotting.",
+  "source_sha256": {
+    "student_attempts/solver.py": "59fb045a30373e42c7f57d60a2e50b76790d336d77fb9e08f5385dbb58f5f8d6",
+    "student_attempts/lp_solver.py": "4bad2c3c285d92cc466820294c936b58172f40628d5dafa71491d2a98b1c39b1",
+    "student_attempts/treeplex_representation.py": "6b59cacf00e51e5b46f63995b139f910837f371b52f0740fb6836f49f652c626",
+    "student_attempts/env_config.py": "f388fb2ad44555aa7a5e0c10e809d539d65de960278e95e3959d689663e3b071",
+    "task4/run_cfr_ablation.py": "3420d71437007575776539c964b6d4aabca83fff43cb5d5f597e982bd19dee86"
+  },
+  "games": {
+    "neutral": {
+      "build_seconds": 1.0126380000729114,
+      "sequences": [
+        3672,
+        3672
+      ],
+      "infosets": [
+        2757,
+        2757
+      ],
+      "stored_pairs": 12832,
+      "nonzero_pairs": 2816,
+      "lp_source": "student_attempts/lp_solver.py",
+      "lp": {
+        "value": -8.673617379884035e-19,
+        "lower_bound": 0.0,
+        "upper_bound": 0.0,
+        "gap": 0.0,
+        "duality_gap": 0.0,
+        "feasibility_p1": 2.220446049250313e-16,
+        "feasibility_p2": 3.0531133177191805e-16,
+        "dual_feasibility_p1": 1.3010426069826053e-18,
+        "dual_feasibility_p2": 8.673617379884035e-19,
+        "optimality_p1": 8.673617379884035e-19,
+        "optimality_p2": 8.673617379884035e-19,
+        "iterations_p1": 270,
+        "iterations_p2": 294,
+        "status": "optimal",
+        "nonzero_payoff_pairs": 2816,
+        "total_seconds": 0.5769323999993503
+      },
+      "lp_lower": -8.673617379884035e-19,
+      "lp_upper": 6.071532165918825e-18,
+      "lp_flow_error": 3.0531133177191805e-16,
+      "experimental_export_method": "CFR+",
+      "experimental_export_iterations": 20000,
+      "experimental_export_spr": 1.0150292830682014e-06
+    },
+    "advantage": {
+      "build_seconds": 1.2668703000526875,
+      "sequences": [
+        3672,
+        3672
+      ],
+      "infosets": [
+        2757,
+        2757
+      ],
+      "stored_pairs": 12832,
+      "nonzero_pairs": 6108,
+      "lp_source": "student_attempts/lp_solver.py",
+      "lp": {
+        "value": 0.26344671201814057,
+        "lower_bound": 0.26344671201814057,
+        "upper_bound": 0.2634467120181405,
+        "gap": 0.0,
+        "duality_gap": -5.551115123125783e-17,
+        "feasibility_p1": 3.608224830031759e-16,
+        "feasibility_p2": 5.551115123125783e-17,
+        "dual_feasibility_p1": 5.204170427930421e-18,
+        "dual_feasibility_p2": 8.673617379884035e-17,
+        "optimality_p1": 0.0,
+        "optimality_p2": 5.551115123125783e-17,
+        "iterations_p1": 753,
+        "iterations_p2": 602,
+        "status": "optimal",
+        "nonzero_payoff_pairs": 6108,
+        "total_seconds": 0.09850459999870509
+      },
+      "lp_lower": 0.26344671201814057,
+      "lp_upper": 0.26344671201814057,
+      "lp_flow_error": 3.608224830031759e-16
+    },
+    "contested": {
+      "build_seconds": 1.1143563999794424,
+      "sequences": [
+        3672,
+        3672
+      ],
+      "infosets": [
+        2757,
+        2757
+      ],
+      "stored_pairs": 12832,
+      "nonzero_pairs": 7224,
+      "lp_source": "student_attempts/lp_solver.py",
+      "lp": {
+        "value": 0.2282142857142857,
+        "lower_bound": 0.22821428571428568,
+        "upper_bound": 0.2282142857142857,
+        "gap": 2.7755575615628914e-17,
+        "duality_gap": 2.7755575615628914e-17,
+        "feasibility_p1": 3.608224830031759e-16,
+        "feasibility_p2": 2.220446049250313e-16,
+        "dual_feasibility_p1": 4.119968255444917e-18,
+        "dual_feasibility_p2": 2.5587171270657905e-17,
+        "optimality_p1": 2.7755575615628914e-17,
+        "optimality_p2": 0.0,
+        "iterations_p1": 697,
+        "iterations_p2": 636,
+        "status": "optimal",
+        "nonzero_payoff_pairs": 7224,
+        "total_seconds": 0.09424609993584454
+      },
+      "lp_lower": 0.2282142857142857,
+      "lp_upper": 0.2282142857142857,
+      "lp_flow_error": 3.608224830031759e-16
+    }
+  }
+}

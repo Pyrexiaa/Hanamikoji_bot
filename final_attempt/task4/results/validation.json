@@ -1,0 +1,122 @@
+{
+  "engine": "python",
+  "python": "3.12.3 | packaged by conda-forge | (main, Apr 15 2024, 18:20:11) [MSC v.1938 64 bit (AMD64)]",
+  "numpy": "1.26.4",
+  "treeplex_original_sha256": "6b59cacf00e51e5b46f63995b139f910837f371b52f0740fb6836f49f652c626",
+  "treeplex_unchanged": true,
+  "strategies": [
+    {
+      "path": "tasks\\nash_p1.npz",
+      "sha256": "ed449f981daf3dd43157a92bfb96f12c8dbe40c545e269a9c22dcf4c03481dcd",
+      "player_id": 0,
+      "infosets_checked": 2757,
+      "num_sequences": 3672,
+      "minimum_action_probability": 0.0,
+      "maximum_action_probability": 1.0,
+      "maximum_behavioral_normalization_error": 2.220446049250313e-16,
+      "maximum_sequence_flow_error": 2.220446049250313e-16
+    },
+    {
+      "path": "tasks\\nash_p2.npz",
+      "sha256": "e12329f14d50792d7c8948dc3b9b2a3f2c3482800740f12a17952f523f102e82",
+      "player_id": 1,
+      "infosets_checked": 2757,
+      "num_sequences": 3672,
+      "minimum_action_probability": 0.0,
+      "maximum_action_probability": 1.0000000000000013,
+      "maximum_behavioral_normalization_error": 1.3322676295501878e-15,
+      "maximum_sequence_flow_error": 3.0531133177191805e-16
+    }
+  ],
+  "loaded_profile_payoff_p1": 2.6020852139652106e-18,
+  "exact_best_response_lower_bound": -8.673617379884035e-19,
+  "exact_best_response_upper_bound": 6.071532165918825e-18,
+  "saddle_point_residual": 6.938893903907228e-18,
+  "p1_unilateral_improvement": 3.469446951953614e-18,
+  "p2_unilateral_improvement": 3.469446951953614e-18,
+  "engine_payoff_comparisons": [
+    {
+      "profile": "loaded P1 vs loaded P2",
+      "sequence_form_payoff_p1": 2.6020852139652106e-18,
+      "exhaustive_engine_payoff_p1": 0.0,
+      "absolute_difference": 2.6020852139652106e-18
+    },
+    {
+      "profile": "best response P1 vs loaded P2",
+      "sequence_form_payoff_p1": 6.071532165918825e-18,
+      "exhaustive_engine_payoff_p1": 6.938893903907228e-18,
+      "absolute_difference": 8.673617379884035e-19
+    },
+    {
+      "profile": "loaded P1 vs best response P2",
+      "sequence_form_payoff_p1": -8.673617379884035e-19,
+      "exhaustive_engine_payoff_p1": -3.469446951953614e-18,
+      "absolute_difference": 2.6020852139652106e-18
+    },
+    {
+      "profile": "loaded P1 vs RandomAgent P2",
+      "sequence_form_payoff_p1": 0.09771825396825395,
+      "exhaustive_engine_payoff_p1": 0.09771825396825395,
+      "absolute_difference": 0.0
+    },
+    {
+      "profile": "RandomAgent P1 vs loaded P2",
+      "sequence_form_payoff_p1": -0.09454365079365076,
+      "exhaustive_engine_payoff_p1": -0.09454365079365079,
+      "absolute_difference": 2.7755575615628914e-17
+    },
+    {
+      "profile": "loaded P1 vs GreedyAgent P2",
+      "sequence_form_payoff_p1": 0.1357142857142857,
+      "exhaustive_engine_payoff_p1": 0.13571428571428568,
+      "absolute_difference": 2.7755575615628914e-17
+    },
+    {
+      "profile": "GreedyAgent P1 vs loaded P2",
+      "sequence_form_payoff_p1": -0.13571428571428568,
+      "exhaustive_engine_payoff_p1": -0.1357142857142857,
+      "absolute_difference": 2.7755575615628914e-17
+    },
+    {
+      "profile": "loaded P1 vs CardCountingAgent P2",
+      "sequence_form_payoff_p1": 0.0488095238095238,
+      "exhaustive_engine_payoff_p1": 0.0488095238095238,
+      "absolute_difference": 0.0
+    },
+    {
+      "profile": "CardCountingAgent P1 vs loaded P2",
+      "sequence_form_payoff_p1": -0.0488095238095238,
+      "exhaustive_engine_payoff_p1": -0.0488095238095238,
+      "absolute_difference": 0.0
+    }
+  ],
+  "maximum_engine_representation_difference": 2.7755575615628914e-17,
+  "heuristic_expected_payoffs": [
+    {
+      "opponent": "RandomAgent",
+      "loaded_player1_expected_payoff": 0.09771825396825395,
+      "loaded_player2_expected_payoff": 0.09454365079365076,
+      "mean_payoff_across_seats": 0.09613095238095236
+    },
+    {
+      "opponent": "GreedyAgent",
+      "loaded_player1_expected_payoff": 0.1357142857142857,
+      "loaded_player2_expected_payoff": 0.13571428571428568,
+      "mean_payoff_across_seats": 0.13571428571428568
+    },
+    {
+      "opponent": "CardCountingAgent",
+      "loaded_player1_expected_payoff": 0.0488095238095238,
+      "loaded_player2_expected_payoff": 0.0488095238095238,
+      "mean_payoff_across_seats": 0.0488095238095238
+    }
+  ],
+  "seeded_single_rounds": {
+    "count": 100,
+    "seeds": "0 through 99",
+    "player1_wins": 9,
+    "player2_wins": 3,
+    "ties": 88
+  },
+  "all_checks_passed": true
+}

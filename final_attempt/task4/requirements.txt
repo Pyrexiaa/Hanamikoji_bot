@@ -1,0 +1,10 @@
+# Python 3.12; direct scientific and notebook dependencies.
+# Core graded interfaces require only NumPy; SciPy is imported lazily.
+numpy==1.26.4
+scipy==1.16.0
+matplotlib==3.10.0
+nbformat==5.10.4
+nbclient==0.8.0
+jupyter_client==8.6.0
+ipykernel==6.28.0
+notebook==7.3.2
