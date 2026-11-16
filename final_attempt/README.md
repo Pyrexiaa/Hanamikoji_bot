@@ -39,6 +39,18 @@ export JUPYTER_RUNTIME_DIR="$PWD/final_attempt/.venv/.jupyter-runtime"
 
 Every command in the sections below is then the same with `"$projectPython"` in place of `& $projectPython`.
 
+## Play against the submitted bot
+
+From the repository root, run this with your project Python environment:
+
+```bash
+python final_attempt/play_nash_gui.py
+```
+
+Open `http://localhost:8080`, select **Tiny Hanamikoji**, **Final Nash bot (neutral single round)** and **Single round**. Click **Choose starting favors**, leave all three geishas **Neutral**, then click **Begin round**. To reset favor selections, click **Back**, then **Choose starting favors** again. Stop the server with Ctrl+C; `--port 8081` selects another port if needed.
+
+The launcher checks the saved policy's supported settings before starting a game and displays a clear setup error for non-neutral favors or full-game mode. It uses the submitted policy without a fallback. Other GUI opponents retain their original settings.
+
 ## Run and verify
 
 ```powershell
@@ -74,7 +86,7 @@ Edit [report.docx](report.docx) directly and export [report.pdf](report.pdf) aft
 soffice --headless --convert-to 'pdf:writer_pdf_Export:{"UseLosslessCompression":{"type":"boolean","value":"true"},"ReduceImageResolution":{"type":"boolean","value":"false"},"UseTaggedPDF":{"type":"boolean","value":"true"}}' --outdir final_attempt final_attempt/report.docx
 ```
 
-The two figures are embedded at their printed size, so leave their size unchanged. A page break precedes the references. After any export, check that the PDF is A4, that the body ends on page 5 and that page 6 holds only the references.
+The two figures are embedded at their printed size, so leave their size unchanged. The parent assignment limits the entire report to five pages, including references; check A4 paper, 12 pt body text and 2.5 cm margins after every export. The reviewed `report.docx` marks revised passages in red; `report.pdf` contains the same revised content in black for submission. Before exporting further edits from the review copy, return the red text to black.
 
 When packaging is authorized, run `& $projectPython -B final_attempt/make_submission.py` from the repository root. This delegates to the lecturer's checker with the final folder selected, producing `final_attempt/submission.zip` with top-level `student_attempts/`, `tasks/nash_p1.npz`, `tasks/nash_p2.npz`, `report.pdf` and `task4/`. The Git layout and submission ZIP layout differ; the original starter implementation is not packaged.
 
