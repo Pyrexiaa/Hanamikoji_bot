@@ -1,0 +1,13 @@
+# Check text files out with LF line endings on every operating system.
+# The lecturer's make_submission.py compares treeplex_representation.py byte for
+# byte with the provided file, and the experiment records hold raw-byte source
+# hashes, so a Windows checkout must not rewrite these files with CRLF.
+* text=auto eol=lf
+
+# Binary evidence and deliverables are never converted.
+*.npz binary
+*.gz binary
+*.png binary
+*.pdf binary
+*.docx binary
+*.zip binary

@@ -1,12 +1,21 @@
-"""Plot the measured three-family comparison (Figure 1) and the decomposition/DO-cost study (Figure 2)."""
+"""Plot the measured three-family comparison (report Figure 1) and the decomposition/DO-cost study.
+
+convergence.png is the report's Figure 1, drawn at its printed size. decomposition.png
+is a supporting figure that is not included in the report.
+"""
 from pathlib import Path
-import argparse,json,os
-os.environ.setdefault('MPLCONFIGDIR','/tmp/hanamikoji-matplotlib')
+import argparse,json,os,tempfile
+# A writable Matplotlib cache on every operating system (Windows has no /tmp).
+os.environ.setdefault('MPLCONFIGDIR',os.path.join(tempfile.gettempdir(),'hanamikoji-matplotlib'))
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FixedLocator,LogFormatterMathtext,NullLocator
 ATTEMPT=Path(__file__).resolve().parents[1]
 COLORS={'CFR':'#425466','Fictitious play':'#24734e','Double oracle':'#b36b23'}
+# Figure 1 is drawn at its printed size, so the report embeds it unscaled and the
+# 12 pt labels stay 12 pt: the 16 cm text width by 4.8 cm, in inches.
+REPORT_FIGURE_SIZE=(16/2.54,4.8/2.54)
 
 def median_run(runs):
     return sorted(runs,key=lambda q:q['wall_seconds'])[len(runs)//2]
@@ -18,21 +27,27 @@ def style_axes(axes,threshold):
         ax.margins(x=.12,y=.15)
 
 def figure_convergence(r,output):
-    fig,axes=plt.subplots(1,2,figsize=(6.3,2.9))
+    fig,axes=plt.subplots(1,2,figsize=REPORT_FIGURE_SIZE,sharey=True,layout='constrained')
     for name,style in (('CFR','-'),('Fictitious play','--'),('Double oracle','-.')):
         run=median_run(r['scenarios']['neutral']['methods'][name])
         h=[q for q in run['history'] if q['iteration']>0]
+        # Numerical certificates (~1e-15) are drawn at the 1e-8 floor stated in the caption.
         values=[max(q['spr'],1e-8) for q in h]
         axes[0].loglog([q['iteration'] for q in h],values,label=name,color=COLORS[name],ls=style,lw=1.8)
         axes[1].loglog([q['elapsed_seconds'] for q in h],values,label=name,color=COLORS[name],ls=style,lw=1.8)
     style_axes(axes,r['configuration']['spr_threshold'])
+    for ax in axes:
+        ax.margins(x=.06)
+        ax.set_ylim(3e-9,1.0)
+        ax.yaxis.set_major_locator(FixedLocator([1e-2,1e-4,1e-6,1e-8]))
+        ax.yaxis.set_major_formatter(LogFormatterMathtext())
+        ax.yaxis.set_minor_locator(NullLocator())
     axes[0].set_ylabel('SPR')
     axes[0].set_xlabel('Iterations')
     axes[1].set_xlabel('Elapsed time (s)')
-    fig.legend(*axes[0].get_legend_handles_labels(),loc='upper center',ncol=3,frameon=False,
-               handlelength=1.3,columnspacing=.9,handletextpad=.4)
-    fig.subplots_adjust(left=.13,right=.96,bottom=.23,top=.81,wspace=.38)
-    fig.savefig(output,dpi=240)
+    fig.legend(*axes[0].get_legend_handles_labels(),loc='outside upper center',ncol=3,frameon=False,
+               handlelength=1.6,columnspacing=1.2,handletextpad=.4,borderaxespad=0)
+    fig.savefig(output,dpi=300)
     plt.close(fig)
 
 def figure_decomposition(r,output):
@@ -75,7 +90,7 @@ def main():
     parser.add_argument('--output',type=Path,default=ATTEMPT/'task4'/'results'/'convergence.png')
     parser.add_argument('--output2',type=Path,default=ATTEMPT/'task4'/'results'/'decomposition.png')
     args=parser.parse_args()
-    r=json.loads(args.input.read_text())
+    r=json.loads(args.input.read_text(encoding='utf-8'))
     plt.rcParams.update({'font.size':12,'axes.labelsize':12,'xtick.labelsize':12,'ytick.labelsize':12,
                         'legend.fontsize':12,'font.family':'DejaVu Sans','axes.spines.top':False,'axes.spines.right':False})
     args.output.parent.mkdir(parents=True,exist_ok=True)

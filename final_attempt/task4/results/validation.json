@@ -1,12 +1,12 @@
 {
   "engine": "python",
-  "python": "3.12.3 | packaged by conda-forge | (main, Apr 15 2024, 18:20:11) [MSC v.1938 64 bit (AMD64)]",
-  "numpy": "1.26.4",
+  "python": "3.10.22 (main, Oct 29 2026, 20:29:19) [Clang 20.1.8 ]",
+  "numpy": "2.2.6",
   "treeplex_original_sha256": "6b59cacf00e51e5b46f63995b139f910837f371b52f0740fb6836f49f652c626",
   "treeplex_unchanged": true,
   "strategies": [
     {
-      "path": "tasks\\nash_p1.npz",
+      "path": "tasks/nash_p1.npz",
       "sha256": "ed449f981daf3dd43157a92bfb96f12c8dbe40c545e269a9c22dcf4c03481dcd",
       "player_id": 0,
       "infosets_checked": 2757,
@@ -17,7 +17,7 @@
       "maximum_sequence_flow_error": 2.220446049250313e-16
     },
     {
-      "path": "tasks\\nash_p2.npz",
+      "path": "tasks/nash_p2.npz",
       "sha256": "e12329f14d50792d7c8948dc3b9b2a3f2c3482800740f12a17952f523f102e82",
       "player_id": 1,
       "infosets_checked": 2757,

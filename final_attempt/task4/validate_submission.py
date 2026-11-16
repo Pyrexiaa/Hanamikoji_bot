@@ -23,6 +23,7 @@ os.environ["HANA_ENGINE"] = "python"
 
 from env_config import env, PLAYER_1, PLAYER_2
 from solver import Solver
+from source_digest import matches_recorded_digest
 from treeplex_representation import (
     TreeplexGame,
     convert_behavioral_to_sequence_form_strategy,
@@ -67,7 +68,8 @@ def validate_loaded_agent(game, path, player):
     error = flow_error(sequence, treeplex)
     assert error < 1e-10
     metadata = {
-        "path": str(path.relative_to(ROOT)),
+        # Forward slashes on every operating system, so the record is portable.
+        "path": path.relative_to(ROOT).as_posix(),
         "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
         "player_id": player,
         "infosets_checked": treeplex.get_num_infosets(),
@@ -81,9 +83,15 @@ def validate_loaded_agent(game, path, player):
 
 
 def main():
-    original_hash = hashlib.sha256(
-        (ROOT / "student_attempts" / "treeplex_representation.py").read_bytes()).hexdigest()
-    assert original_hash == TREEPLEX_SHA256, "Provided treeplex representation changed"
+    treeplex_source = ROOT / "student_attempts" / "treeplex_representation.py"
+    assert matches_recorded_digest(treeplex_source, TREEPLEX_SHA256), \
+        "Provided treeplex representation changed"
+    # The code is the provided one; record its canonical (LF) digest on every system.
+    original_hash = TREEPLEX_SHA256
+    if hashlib.sha256(treeplex_source.read_bytes()).hexdigest() != TREEPLEX_SHA256:
+        print("NOTE: treeplex_representation.py matches the provided file except for CRLF line "
+              "endings. The lecturer's make_submission.py compares exact bytes, so build the "
+              "submission zip from a checkout with LF line endings.", file=sys.stderr)
     game = TreeplexGame()
     solver = Solver(game)
     a1, b1, x, m1 = validate_loaded_agent(game, ROOT / "tasks" / "nash_p1.npz", PLAYER_1)

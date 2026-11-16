@@ -1,7 +1,8 @@
 """Check preserved experiments and replay short prefixes without replacing measurements.
 
-Run from the repository root. Recorded paths are normalized across operating
-systems. Results are printed to the console; all saved evidence is read-only.
+Run from the repository root. Recorded paths and source line endings are
+normalized across operating systems. Results are printed to the console; all
+saved evidence is read-only.
 """
 import ast
 from collections import defaultdict
@@ -18,6 +19,7 @@ import run_cfr_ablation as ablation
 import run_experiments as experiment
 from lp_solver import solve_sequence_form_lp
 from solver import Solver
+from source_digest import matches_recorded_digest
 from validate_submission import validate_loaded_agent
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,6 +27,7 @@ RESULTS = ROOT / "task4" / "results"
 
 
 def digest(path):
+    """Exact-byte SHA-256, for binary evidence such as the gzip histories."""
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
@@ -35,8 +38,9 @@ def recorded_path(base, name):
 
 
 def check_sources(sources):
+    # Text sources: the same code may be checked out with LF or CRLF line endings.
     for name, expected in sources.items():
-        assert digest(recorded_path(ROOT, name)) == expected, name
+        assert matches_recorded_digest(recorded_path(ROOT, name), expected), name
     return len(sources)
 
 

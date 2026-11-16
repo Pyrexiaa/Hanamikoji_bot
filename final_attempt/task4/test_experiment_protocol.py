@@ -14,6 +14,9 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import run_cfr_ablation as ablation
 import run_experiments as runner
+from source_digest import matches_recorded_digest, source_digests
+
+ATTEMPT = Path(__file__).resolve().parents[1]
 
 
 class ExperimentProtocolTests(unittest.TestCase):
@@ -102,6 +105,39 @@ class ExperimentProtocolTests(unittest.TestCase):
         con = ablation.make_game('contested')
         self.assertGreater(len(adv.seq_pair_to_leaves), 0)
         self.assertGreater(len(con.seq_pair_to_leaves), 0)
+
+    def test_source_digest_ignores_line_endings_and_nothing_else(self):
+        unix = b'import numpy as np\n\nVALUE = 1\n'
+        windows = unix.replace(b'\n', b'\r\n')
+        with TemporaryDirectory() as folder:
+            lf, crlf, edited = (Path(folder) / name for name in ('lf.py', 'crlf.py', 'edited.py'))
+            lf.write_bytes(unix)
+            crlf.write_bytes(windows)
+            edited.write_bytes(unix.replace(b'VALUE = 1', b'VALUE = 2'))
+            recorded_on_unix = hashlib.sha256(unix).hexdigest()
+            recorded_on_windows = hashlib.sha256(windows).hexdigest()
+            self.assertNotEqual(recorded_on_unix, recorded_on_windows)
+            # A digest recorded under either convention matches either checkout.
+            for path in (lf, crlf):
+                self.assertEqual(source_digests(path), {recorded_on_unix, recorded_on_windows})
+                self.assertTrue(matches_recorded_digest(path, recorded_on_unix))
+                self.assertTrue(matches_recorded_digest(path, recorded_on_windows))
+            # Any change to the content itself is still detected.
+            self.assertFalse(matches_recorded_digest(edited, recorded_on_unix))
+            self.assertFalse(matches_recorded_digest(edited, recorded_on_windows))
+
+    def test_recorded_source_hashes_match_this_checkout_on_any_system(self):
+        results = ATTEMPT / 'task4' / 'results'
+        main = json.loads((results / 'experiments.json').read_text(encoding='utf-8'))
+        ablation_summary = json.loads((results / 'summary.json').read_text(encoding='utf-8'))
+        recorded = (main['environment']['source_sha256'], ablation_summary['source_sha256'])
+        self.assertEqual([len(sources) for sources in recorded], [7, 5])
+        for sources in recorded:
+            for name, expected in sources.items():
+                # Names recorded on Windows use backslashes.
+                path = ATTEMPT / name.replace('\\', '/')
+                self.assertTrue(path.is_file(), name)
+                self.assertTrue(matches_recorded_digest(path, expected), name)
 
 
 if __name__ == '__main__':

@@ -14,7 +14,7 @@ $projectPython = (Resolve-Path 'final_attempt/.venv/Scripts/python.exe').Path
 & $projectPython -m pip install -r final_attempt/task4/requirements.txt
 ```
 
-For an existing environment, just set `$projectPython`. Calling the interpreter directly also works when PowerShell blocks activation scripts. On Linux/macOS the interpreter is `final_attempt/.venv/bin/python`. The pinned dependencies cover numerical work, plotting and Jupyter execution. Graded interfaces need NumPy; SciPy is loaded only for LP functionality.
+For an existing environment, just set `$projectPython`. Calling the interpreter directly also works when PowerShell blocks activation scripts. The pinned dependencies cover numerical work, plotting and Jupyter execution. Graded interfaces need NumPy; SciPy is loaded only for LP functionality.
 
 For the commands below, use the Python engine and keep runtime files local:
 
@@ -26,6 +26,19 @@ $env:MPLCONFIGDIR = (Resolve-Path 'final_attempt/.venv').Path + '/.matplotlib'
 $env:JUPYTER_RUNTIME_DIR = (Resolve-Path 'final_attempt/.venv').Path + '/.jupyter-runtime'
 ```
 
+On macOS and Linux the same setup in a POSIX shell is:
+
+```bash
+python3 -m venv final_attempt/.venv        # a Python 3.12 interpreter
+projectPython="$PWD/final_attempt/.venv/bin/python"
+"$projectPython" -m pip install -r final_attempt/task4/requirements.txt
+export HANA_ENGINE=python PYTHONDONTWRITEBYTECODE=1 PYTHONUTF8=1
+export MPLCONFIGDIR="$PWD/final_attempt/.venv/.matplotlib"
+export JUPYTER_RUNTIME_DIR="$PWD/final_attempt/.venv/.jupyter-runtime"
+```
+
+Every command in the sections below is then the same with `"$projectPython"` in place of `& $projectPython`.
+
 ## Run and verify
 
 ```powershell
@@ -35,7 +48,9 @@ $env:JUPYTER_RUNTIME_DIR = (Resolve-Path 'final_attempt/.venv').Path + '/.jupyte
 & $projectPython -B final_attempt/task4/verify_evidence.py
 ```
 
-The five test modules contain 60 tests. The notebook helper saves genuine outputs in the original four solution notebooks. `check_notebooks.py` additionally checks Tasks 1–2 without Jupyter. Validation prints results; `validate_submission.py` also updates the numerical policy checks in `task4/results/validation.json`.
+The five test modules contain 62 tests. The notebook helper saves genuine outputs in the original four solution notebooks. `check_notebooks.py` additionally checks Tasks 1–2 without Jupyter. Validation prints results; `validate_submission.py` also updates the numerical policy checks in `task4/results/validation.json`.
+
+These checks give the same result on Windows, macOS and Linux. The experiment records store raw-byte SHA-256 hashes of the source files, and the bytes of a text file depend on its line endings (LF or CRLF), which differ between checkouts. `task4/source_digest.py` therefore compares each recorded hash with the file under both conventions: only line endings are ignored, and any other change to a source still fails. Recorded paths are read with either separator.
 
 ## Reproduce experiments and figures
 
@@ -53,8 +68,14 @@ Task 3 and Experiment A write LP policies to `tasks/nash_p1.npz` and `tasks/nash
 
 ## Report and submission
 
-Edit [report.docx](report.docx) directly in Word and export [report.pdf](report.pdf) after review. No document-generation scripts are required.
+Edit [report.docx](report.docx) directly and export [report.pdf](report.pdf) after review. No document-generation scripts are required. Word or LibreOffice can export it; the committed PDF comes from LibreOffice, which sets Times New Roman text in the metric-compatible Liberation Serif:
+
+```bash
+soffice --headless --convert-to 'pdf:writer_pdf_Export:{"UseLosslessCompression":{"type":"boolean","value":"true"},"ReduceImageResolution":{"type":"boolean","value":"false"},"UseTaggedPDF":{"type":"boolean","value":"true"}}' --outdir final_attempt final_attempt/report.docx
+```
+
+The two figures are embedded at their printed size, so leave their size unchanged. A page break precedes the references. After any export, check that the PDF is A4, that the body ends on page 5 and that page 6 holds only the references.
 
 When packaging is authorized, run `& $projectPython -B final_attempt/make_submission.py` from the repository root. This delegates to the lecturer's checker with the final folder selected, producing `final_attempt/submission.zip` with top-level `student_attempts/`, `tasks/nash_p1.npz`, `tasks/nash_p2.npz`, `report.pdf` and `task4/`. The Git layout and submission ZIP layout differ; the original starter implementation is not packaged.
 
-The repository-root `.gitignore` excludes environments, Python/Jupyter caches and submission ZIPs. The small nested file adds Word lock files and OS/editor artifacts. Scientific data, figures, policies and executed notebooks remain shareable.
+The repository-root `.gitignore` excludes environments, Python/Jupyter caches and submission ZIPs. The small nested file adds Word lock files and OS/editor artifacts. The nested `.gitattributes` checks text files out with LF line endings on every system, so `treeplex_representation.py` stays byte-identical to the provided file, as the lecturer's checker requires. Scientific data, figures, policies and executed notebooks remain shareable.

@@ -1,10 +1,11 @@
 """Print the report's numerical tables and comparisons from primary experiment data."""
 from collections import defaultdict
 import csv
-import hashlib
 import json
 from pathlib import Path
 from statistics import median
+
+from source_digest import matches_recorded_digest
 
 ROOT = Path(__file__).resolve().parents[1]
 RESULTS = ROOT / 'task4/results'
@@ -14,10 +15,6 @@ CASES_A = ['neutral', 'first_player', 'second_player', 'favored_g3']
 CASES_B = ['neutral', 'advantage', 'contested']
 LABELS = {'neutral': 'Random start', 'first_player': 'P1 starts',
           'second_player': 'P2 starts', 'favored_g3': 'P1 + G3'}
-
-
-def digest(path):
-    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def read(name):
@@ -30,9 +27,10 @@ def scientific(value):
 
 def extract_data():
     a, b = read('experiments.json'), read('summary.json')
+    # Recorded names may use Windows separators and the files either line ending.
     for sources in (a['environment']['source_sha256'], b['source_sha256']):
         for name, expected in sources.items():
-            assert digest(ROOT / name.replace('\\', '/')) == expected, name
+            assert matches_recorded_digest(ROOT / name.replace('\\', '/'), expected), name
     rows_a, lp_a, compact_a = [], [], []
     for case in CASES_A:
         scenario = a['scenarios'][case]

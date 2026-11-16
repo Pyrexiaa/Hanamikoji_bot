@@ -59,8 +59,10 @@ All outputs reside in `results/`:
 
 - `experiments.json` and `histories/*.jsonl.gz`: main and subsidiary Direction D measurements, source hashes and full intermediate histories.
 - `summary.json` and `convergence.csv`: Direction C definitions, LP checks, every checkpoint, averaged/current SPR, best-response bounds and timings.
-- `convergence.png` and `decomposition.png`: Direction D convergence and structural/restricted-LP analyses.
-- `convergence_iterations.png` and `convergence_time.png`: Direction C checkpoint medians across repetitions. The driver generates these; `plot_report_figures.py` redraws the same data with 12 pt labels at report width and shared vertical limits.
+- `convergence.png` and `decomposition.png`: Direction D convergence and structural/restricted-LP analyses. `convergence.png` is the report's Figure 1; `decomposition.png` supports the discussion and is not in the report.
+- `convergence_iterations.png` and `convergence_time.png`: Direction C checkpoint medians across repetitions. The driver generates these; `plot_report_figures.py` redraws the same data with 12 pt labels and shared vertical limits. `convergence_iterations.png` is the report's Figure 2.
+
+Both report figures are drawn at their printed size, the 16 cm text width by 4.8 cm (Figure 1) and 5.2 cm (Figure 2), and the report embeds them unscaled. Their 12 pt labels therefore print at 12 pt and nothing is stretched; resizing a figure in the report would distort it.
 - `cfr_plus_p1.npz` and `cfr_plus_p2.npz`: experimental averages, separate from submitted LP policies in `tasks/`.
 - `validation.json`: numerical checks of the submitted policies. Tests and validators print their results to the console; notebook outputs are saved in the notebooks themselves.
 
@@ -69,5 +71,7 @@ All outputs reside in `results/`:
 Direction D figures select the repetition with median full runtime; values below 1e-8 share a disclosed visual floor. Table crossing times are separate medians. Exact values remain in the primary files.
 
 The five test modules cover posterior inference, exhaustive responses/payoffs, flow, all CFR configurations, explicit alternating-update arithmetic, averaging, continuation/reset, FP, DO and experimental protocols. The evidence checker validates 36 histories, 630 observations, source hashes, seven scenario LPs, short solver replays and policy exports. It prints a summary without writing files.
+
+The recorded source hashes are raw-byte digests taken on the machine that ran the experiments, where one file was saved with CRLF and the others with LF. `source_digest.py` compares each recorded hash with the file under both line-ending conventions, so the evidence checker, `extract_report_data.py`, `plot_report_figures.py` and `validate_submission.py` behave identically on Windows, macOS and Linux checkouts. Only line endings are ignored: any other change to a recorded source still fails the check. The gzip histories are binary and are compared byte for byte.
 
 These results concern single-round Tiny Hanamikoji. They establish neither multi-round equilibrium nor scalability to larger games. Three repetitions limit fine runtime comparisons, and LP/best-response checks remain numerical.
