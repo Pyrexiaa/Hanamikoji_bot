@@ -1,0 +1,40 @@
+{
+  "iterations": 20000,
+  "spr_threshold": 0.002,
+  "check_every": 25,
+  "repeats": 3,
+  "warmup_iterations": 2,
+  "lp_tolerance": 1e-09,
+  "scenarios": [
+    "neutral",
+    "first_player",
+    "second_player",
+    "favored_g3"
+  ],
+  "methods": [
+    "CFR",
+    "Fictitious play",
+    "Double oracle"
+  ],
+  "full_budget": true,
+  "initialization": "Uniform behavioral strategy; CFR zero regrets, fictitious play one uniform prior observation, double oracle one uniform seed strategy per player.",
+  "comparison": "All main runs complete the same iteration budget, even after first reaching the full SPR target. Same game, payoff scale, repetitions, deterministic tie handling, and warm-up. CFR certifies its average with two extra best responses every check_every iterations; FP and DO certify their current output every iteration using their own oracle values. Iterations have different work; compare elapsed time and work counts as well. Subsidiary analyses use separately recorded stopping rules.",
+  "payoffs": {
+    "win": 1,
+    "loss": -1,
+    "unresolved_round": 0
+  },
+  "chance": "Exact weighted enumeration; no sampling or training seed.",
+  "history_output_every": 25,
+  "summary_checkpoints": [
+    25,
+    100,
+    500,
+    1000,
+    2000,
+    5000,
+    10000,
+    20000
+  ],
+  "history_storage": "Complete measured histories are stored in per-run gzip JSONL files: CFR every check_every iterations, FP and DO every iteration. Main JSON retains exact regular history_output_every checkpoints, first target, requested summary checkpoints, and final observation. History archival is outside solver timing."
+}

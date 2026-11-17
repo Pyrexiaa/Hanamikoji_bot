@@ -2,7 +2,6 @@ import copy
 from collections import defaultdict
 from env_config import env, PLAYER_1, PLAYER_2
 from engine.info_state import RoundInfoState
-import numpy as np
 from typing import Any, Dict
 
 def interactive_game_tree_traversal():
@@ -151,8 +150,67 @@ def compute_posterior_given_opponent_agent(initial_state: env.GameState,
     target_player = target_info_state.player_id
     opponent_player = 1 - target_player
 
-    # Your code here: traverse the game tree and compute the posterior distribution over game states consistent with target_info_state
-    raise NotImplementedError("Posterior computation not implemented yet")
+    if target_player not in (PLAYER_1, PLAYER_2):
+        raise ValueError("The target information state must belong to player 0 or 1.")
+
+    reach = defaultdict(float)
+    state = copy.deepcopy(initial_state)
+    target_events = getattr(target_info_state, "events", None)
+    target_text = str(target_info_state) if target_events is None else None
+
+    def traverse(probability: float) -> None:
+        if probability == 0.0 or state.is_round_complete():
+            return
+
+        info = state.get_info_state(target_player)
+        # Observations only accumulate within a round. A mismatched prefix
+        # can never reach the target information set.
+        if info.round_number != target_info_state.round_number:
+            return
+        if target_events is not None:
+            if info.events != target_events[:len(info.events)]:
+                return
+        else:
+            # The optional C++ backend exposes the same history as a string.
+            info_text = str(info)
+            if info_text != target_text and not target_text.startswith(info_text + "|"):
+                return
+
+        actor = state.current_player
+        if actor == target_player and info == target_info_state:
+            # Distinct histories can have the same physical-state key.
+            reach[state.to_key()] += probability
+            return
+
+        if actor == env.CHANCE_PLAYER:
+            branches = state.get_chance_actions_with_probs()
+        elif actor == opponent_player:
+            branches = opponent_agent.get_action_distribution(
+                state.get_info_state(opponent_player)
+            ).items()
+        elif actor == target_player:
+            # Perfect recall fixes my past actions at the target infoset;
+            # only chance and opponent reach remain in Bayes' numerator.
+            branches = ((action, 1.0) for action in state.get_legal_actions())
+        else:
+            raise RuntimeError(f"Invalid player during posterior traversal: {actor}")
+
+        for action, action_probability in branches:
+            if action_probability == 0.0:
+                continue
+            if not state.execute_action(action):
+                raise RuntimeError(f"Illegal action during posterior traversal: {action}")
+            try:
+                traverse(probability * action_probability)
+            finally:
+                state.undo_move()
+
+    traverse(1.0)
+    normalizer = sum(reach.values())
+    if normalizer == 0.0:
+        return {}
+    return {key: probability / normalizer for key, probability in reach.items()
+            if probability > 0.0}
 
 def generate_random_infoset(prob_terminate_anywhere = 0.1, seed=12345):
     import random
