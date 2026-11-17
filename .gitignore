@@ -221,3 +221,4 @@ __marimo__/
 
 submission.zip
 *.zip
+.DS_Store
